@@ -1,4 +1,3 @@
 > we be taskin
 
-
-[!](/taskin.mov)
+<video src="https://github.com/fumeapp/taskin/raw/main/taskin.mov" />
