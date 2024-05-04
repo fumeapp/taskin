@@ -1,11 +1,9 @@
-package main
+package taskin
 
 import (
-	"fmt"
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"time"
 )
 
 type TaskState int
@@ -104,7 +102,7 @@ func (r *Runners) Run() error {
 	return err
 }
 
-func Listr(tasks Tasks) Runners {
+func Taskin(tasks Tasks) Runners {
 	var runners Runners
 	for _, task := range tasks {
 		// Use NewRunner to ensure runners are initialized with spinners correctly
@@ -123,37 +121,4 @@ func Listr(tasks Tasks) Runners {
 		}
 	}()
 	return runners
-}
-
-func main() {
-
-	runners := Listr(Tasks{
-		{
-			Title: "Task 1",
-			// sleep for 3 seconds then return nil
-			Task: func(t *Task) error {
-				for i := 0; i < 3; i++ {
-					t.Title = fmt.Sprintf("Task 1: [%d/3] second has passed", i+1)
-					time.Sleep(1 * time.Second)
-				}
-				return nil
-			},
-		},
-		{
-			Title: "Task 2",
-			// sleep for 3 seconds then return nil
-			Task: func(t *Task) error {
-				for i := 0; i < 3; i++ {
-					t.Title = fmt.Sprintf("Task 1: [%d/3] second has passed", i+1)
-					time.Sleep(1 * time.Second)
-				}
-				return nil
-			},
-		},
-	})
-	err := runners.Run()
-
-	if err != nil {
-		panic(err)
-	}
 }
