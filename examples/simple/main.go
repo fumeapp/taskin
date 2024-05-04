@@ -14,7 +14,7 @@ func main() {
 			// sleep for 3 seconds then return nil
 			Task: func(t *taskin.Task) error {
 				for i := 0; i < 3; i++ {
-					t.Title = fmt.Sprintf("Task 1: [%d/3] second has passed", i+1)
+					t.Title = fmt.Sprintf("Task 1: [%d/3] seconds have passed", i+1)
 					time.Sleep(1 * time.Second)
 				}
 				return nil
@@ -25,10 +25,10 @@ func main() {
 			// sleep for 3 seconds then return nil
 			Task: func(t *taskin.Task) error {
 				for i := 0; i < 3; i++ {
-					t.Title = fmt.Sprintf("Task 1: [%d/3] second has passed", i+1)
+					t.Title = fmt.Sprintf("Task 1: [%d/3] seconds have passed", i+1)
 					time.Sleep(1 * time.Second)
 				}
-				return nil
+				return fmt.Errorf("task 2 failed")
 			},
 		},
 	})

@@ -1,6 +1,7 @@
 package taskin
 
 import (
+	"fmt"
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -114,6 +115,7 @@ func Taskin(tasks Tasks) Runners {
 			runners[i].State = Running
 			err := runners[i].Task.Task(&runners[i].Task)
 			if err != nil {
+				runners[i].Task.Title = fmt.Sprintf("%s: %s", runners[i].Task.Title, err.Error())
 				runners[i].State = Failed
 				continue
 			}
