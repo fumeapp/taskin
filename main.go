@@ -15,7 +15,7 @@ const (
 
 type Task struct {
 	Title string
-	Task  func() error
+	Task  func(*Task) error
 }
 type Tasks []Task
 
@@ -28,7 +28,7 @@ type Runners []Runner
 func (r *Runners) Run() error {
 	for _, runner := range *r {
 		runner.State = Running
-		err := runner.Task.Task()
+		err := runner.Task.Task(&runner.Task)
 		if err != nil {
 			runner.State = Failed
 			return err
@@ -56,8 +56,12 @@ func main() {
 		{
 			Title: "Task 1",
 			// sleep for 3 seconds then return nil
-			Task: func() error {
-				time.Sleep(2 * time.Second)
+			Task: func(t *Task) error {
+				time.Sleep(1 * time.Second)
+				t.Title = "1 second has passed"
+				time.Sleep(1 * time.Second)
+				t.Title = "2 seconds have passed"
+				time.Sleep(1 * time.Second)
 				return nil
 			},
 		},
