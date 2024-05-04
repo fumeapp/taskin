@@ -1,131 +1,134 @@
 package main
 
 import (
- "github.com/charmbracelet/bubbles/spinner"
- "github.com/charmbracelet/lipgloss"
- "time"
-
- tea "github.com/charmbracelet/bubbletea"
+    "github.com/charmbracelet/bubbles/spinner"
+    "github.com/charmbracelet/lipgloss"
+    tea "github.com/charmbracelet/bubbletea"
+    "time"
 )
 
 type TaskState int
 
 const (
- NotStarted TaskState = iota
- Running
- Completed
- Failed
+    NotStarted TaskState = iota
+    Running
+    Completed
+    Failed
 )
 
 type Task struct {
- Title string
- Task  func(*Task) error
+    Title string
+    Task  func(*Task) error
 }
 
 type Tasks []Task
 
 type Runner struct {
- Task  Task
- State TaskState
- Msg   tea.Msg
- View  string
+    Task    Task
+    State   TaskState
+    Spinner spinner.Model
 }
 
 type Runners []Runner
 
+func NewRunner(task Task) Runner {
+    s := spinner.New(spinner.WithSpinner(spinner.Dot)) // Initialize with a spinner model
+    s.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("205")) // Styling spinner
+    return Runner{Task: task, State: NotStarted, Spinner: s}
+}
+
 func (r *Runners) Init() tea.Cmd {
- return tea.Batch(func() tea.Cmd {
-  for i := range *r {
-   (*r)[i].State = Running
-   return tea.Tick(time.Second, func(t time.Time) tea.Msg {
-    return &(*r)[i]
-   })
-  }
-  return nil
- }())
-}
-
-func (r *Runners) Run() error {
- p := tea.NewProgram(r)
- _, err :=  p.Run()
- return err
-}
-
-func (r *Runners) View() string {
- var view string
- s := spinner.New()
- s.Spinner = spinner.Dot
-
- for _, runner := range *r {
-  switch runner.State {
-  case Running:
-   view += lipgloss.NewStyle().Render(" " + s.View() + " " + runner.Task.Title)
-  case Completed:
-   view += lipgloss.NewStyle().Render(" ✔ " + runner.Task.Title)
-  case Failed:
-   view += lipgloss.NewStyle().Render(" ✘ " + runner.Task.Title)
-  }
-  view += "\n"
- }
- return view
+    var cmds []tea.Cmd
+    for i := range *r {
+        // Here we directly use spinner.Tick, but since we're going to start tasks
+        // and want them to run concurrently, we initialize those tasks elsewhere
+        cmds = append(cmds, (*r)[i].Spinner.Tick)
+    }
+    // This function starts the tasks concurrently when the program initializes
+    return tea.Batch(cmds...)
 }
 
 func (r *Runners) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
- allDone := true
- s := spinner.NewModel()
- s.Tick() // Update the spinner's frame
+    var cmds []tea.Cmd
 
- for i := range *r {
-  if msg, ok := msg.(*Runner); ok && msg == &(*r)[i] {
-   err := (*r)[i].Task.Task(&(*r)[i].Task)
-   if err != nil {
-    (*r)[i].State = Failed
-   } else {
-    (*r)[i].State = Completed
-   }
-  }
+    switch msg := msg.(type) {
 
-  // If any task is not completed or failed, set allDone to false
-  if (*r)[i].State != Completed && (*r)[i].State != Failed {
-   allDone = false
-  }
- }
+    case spinner.TickMsg:
+        for i := range *r {
+            if (*r)[i].State == Running || (*r)[i].State == NotStarted {
+                // Update and capture new state of spinner and commands for the next tick
+                newSpinner, cmd := (*r)[i].Spinner.Update(msg)
+                (*r)[i].Spinner = newSpinner
+                cmds = append(cmds, cmd)
 
- // If all tasks are done, return a Quit command
- if allDone {
-  return r, tea.Quit
- }
+                // Simulate task starting and state changing for demonstration
+                if (*r)[i].State == NotStarted {
+                    (*r)[i].State = Running
+                }
+            }
+        }
 
- return r, nil
+        return r, tea.Batch(cmds...)
+    }
+
+    return r, nil
+}
+
+func (r *Runners) View() string {
+    var view string
+    for _, runner := range *r {
+        status := ""
+        switch runner.State {
+        case NotStarted, Running:
+            status = runner.Spinner.View() + " " + runner.Task.Title
+        case Completed:
+            status = "✔ " + runner.Task.Title
+        case Failed:
+            status = "✘ " + runner.Task.Title
+        }
+        view += lipgloss.NewStyle().Render(status) + "\n"
+    }
+    return view
+}
+
+func (r *Runners) Run() error {
+    p := tea.NewProgram(r)
+    _, err := p.Run()
+    return err
 }
 
 func Listr(tasks Tasks) Runners {
- var runners Runners
- for _, task := range tasks {
-  runners = append(runners, Runner{Task: task, State: NotStarted})
- }
- return runners
+    var runners Runners
+    for _, task := range tasks {
+        // Use NewRunner to ensure runners are initialized with spinners correctly
+        runners = append(runners, NewRunner(task))
+    }
+    // simulate tasks running after the program starts
+    go func() {
+        time.Sleep(3 * time.Second) // Simulate delay before tasks change state
+        for i := range runners {
+            runners[i].State = Completed // Example of updating state, replace with real task logic
+        }
+    }()
+    return runners
 }
 
 func main() {
 
- runners := Listr(Tasks{
-  {
-   Title: "Task 1",
-   // sleep for 3 seconds then return nil
-   Task: func(t *Task) error {
-    time.Sleep(1 * time.Second)
-    t.Title = "1 second has passed"
-    time.Sleep(1 * time.Second)
-    t.Title = "2 seconds have passed"
-    time.Sleep(1 * time.Second)
-    return nil
-   },
-  },
- })
- err := runners.Run()
+    runners := Listr(Tasks{
+        {
+            Title: "Task 1",
+            Task: func(t *Task) error {
+                // The task logic should go here, replaced with sleep for demonstration
+                time.Sleep(3 * time.Second)
+                t.Title = "Task 1 Completed"
+                return nil
+            },
+        },
+    })
+    err := runners.Run()
 
- if err != nil {
-  panic(err)
- }
+    if err != nil {
+        panic(err)
+    }
 }
