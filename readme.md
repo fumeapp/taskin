@@ -1,10 +1,22 @@
 # Taskin
-Easy and logical-to-implement task lists that feel alive and interactive.
+
+<h1 align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="taskin.png"/>
+    <source media="(prefers-color-scheme: light)" srcset="taskin.png"/>
+    <img width="370" src="taskin.png"/>
+  </picture>
+ <br />
+</h1>
+<br />
 
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/fumeapp/taskin/857a1b8cbeda577a751b5c7f38885995a894169f/taskin.png" width="300" />
 </p>
+
+<p align="center"><strong>🔮 Add user-friendly tasks to your CLI </strong></p>
+
 
 [![Lint](https://github.com/fumeapp/taskin/actions/workflows/lint.yml/badge.svg)](https://github.com/fumeapp/taskin/actions/workflows/lint.yml)
 [![Tests](https://github.com/fumeapp/taskin/actions/workflows/test.yml/badge.svg)](https://github.com/fumeapp/taskin/actions/workflows/test.yml)
