@@ -6,7 +6,6 @@ import (
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/octoper/go-ray"
 )
 
 func NewRunner(task Task, cfg Config) Runner {
@@ -23,7 +22,6 @@ func (task *Task) Progress(current, total int) {
 	if total != 0 { // Check if TaskProgress is set
 		percent := float64(current) / float64(total)
 		task.Bar.SetPercent(percent)
-		ray.Ray(percent)
 	}
 }
 
