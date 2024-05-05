@@ -30,6 +30,6 @@ jobs:
 
       - name: Run tests
         run: go test
-        shell: 'script -q /dev/null bash -e {0}
+        shell: 'script -q /dev/null bash -e {0}'
 
 
