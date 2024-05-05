@@ -56,7 +56,7 @@ func (r *Runners) View() string {
 				percent := float64(runner.Task.ShowProgress.Current) / float64(runner.Task.ShowProgress.Total)
 				status = runner.Spinner.View() + runner.Task.Title + " " + runner.Task.Bar.ViewAs(percent)
 			} else {
-				status = runner.Spinner.View() + " " + runner.Task.Title
+				status = runner.Spinner.View() + runner.Task.Title
 			}
 		case Completed:
 			status = lipgloss.NewStyle().Foreground(runner.Config.Colors.Success).Render("✔") + " " + runner.Task.Title // Green checkmark
