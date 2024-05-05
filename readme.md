@@ -5,7 +5,7 @@
   <img src="https://raw.githubusercontent.com/fumeapp/taskin/857a1b8cbeda577a751b5c7f38885995a894169f/taskin.png" width="300" />
 </p>
 
-[Simple](/simple.gif)
+![Simple](/simple.gif)
 
 ```go
 package main
