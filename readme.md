@@ -6,21 +6,6 @@
 <p align="center"><strong>📋 Add user-friendly tasks to your CLI </strong></p>
 
 
-<p align="center">
-  <!-- Badges -->
-<a href="https://github.com/fumeapp/taskin/pulls"><img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg" alt="PRs Welcome" /></a> 
-<a href="https://github.com/fumeapp/taskin/releases"><img src="https://img.shields.io/github/v/release/fumeapp/taskin" alt="Release" /></a>
-
-  <!-- <a href="https://github.com/your_username/your_project/issues">
-    <img src="https://img.shields.io/github/issues-closed/your_username/your_project.svg" alt="Issues Closed" />
-  </a> -->
-
-</p>
-
-
-
-
-
 [![Lint](https://github.com/fumeapp/taskin/actions/workflows/lint.yml/badge.svg)](https://github.com/fumeapp/taskin/actions/workflows/lint.yml)
 [![Tests](https://github.com/fumeapp/taskin/actions/workflows/test.yml/badge.svg)](https://github.com/fumeapp/taskin/actions/workflows/test.yml)
 
