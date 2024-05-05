@@ -1,11 +1,7 @@
 # Taskin
 
 <h1 align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="taskin.png"/>
-    <source media="(prefers-color-scheme: light)" srcset="taskin.png"/>
-    <img width="370" src="taskin.png"/>
-  </picture>
+    <img src="https://raw.githubusercontent.com/fumeapp/taskin/58464c7afefed78de5b506926dc8edca4fa56316/taskin.png" />
  <br />
 </h1>
 <br />
