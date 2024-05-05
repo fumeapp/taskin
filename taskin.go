@@ -41,7 +41,6 @@ func New(tasks Tasks, cfg Config) Runners {
 		task.Config = cfg
 		runners = append(runners, NewRunner(task, cfg))
 	}
-	// simulate tasks running after the program starts
 	go func() {
 		for i := range runners {
 			runners[i].State = Running
