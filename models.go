@@ -3,7 +3,6 @@ package taskin
 import (
 	"github.com/charmbracelet/bubbles/progress"
 	"github.com/charmbracelet/bubbles/spinner"
-	"github.com/charmbracelet/lipgloss"
 )
 
 type TaskState int
@@ -20,6 +19,7 @@ type Task struct {
 	Task         func(*Task) error
 	ShowProgress TaskProgress
 	Bar          progress.Model
+	Config       Config
 }
 
 type TaskProgress struct {
@@ -37,25 +37,3 @@ type Runner struct {
 }
 
 type Runners []Runner
-
-type Config struct {
-	Spinner spinner.Spinner
-	Colors  ConfigColors
-}
-
-type ConfigColors struct {
-	Spinner lipgloss.Color
-	Pending lipgloss.Color
-	Success lipgloss.Color
-	Failure lipgloss.Color
-}
-
-var Defaults = Config{
-	Spinner: spinner.Dot,
-	Colors: ConfigColors{
-		Spinner: lipgloss.Color("214"),
-		Pending: lipgloss.Color("21"),
-		Success: lipgloss.Color("46"),
-		Failure: lipgloss.Color("196"),
-	},
-}
