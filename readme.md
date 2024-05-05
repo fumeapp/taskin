@@ -1,10 +1,11 @@
-
 # Taskin
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/fumeapp/taskin/857a1b8cbeda577a751b5c7f38885995a894169f/taskin.png" width="300" />
 </p>
 
+[![Lint](https://github.com/fumeapp/taskin/actions/workflows/lint.yml/badge.svg)](https://github.com/fumeapp/taskin/actions/workflows/lint.yml)
+[![Tests](https://github.com/fumeapp/taskin/actions/workflows/test.yml/badge.svg)](https://github.com/fumeapp/taskin/actions/workflows/test.yml)
 
 ## Examples
 
