@@ -1,4 +1,10 @@
-> we be taskin
+
+# Taskin
+
+![logo](/taskin.png)
+
+[Video](https://github.com/fumeapp/taskin/assets/967369/0305537b-f316-4ed3-80aa-0f654d2e818c)
+
 ```go
 package main
 
@@ -42,4 +48,3 @@ func main() {
 }
 ```
 
-[Video](https://github.com/fumeapp/taskin/assets/967369/0305537b-f316-4ed3-80aa-0f654d2e818c)
