@@ -50,7 +50,7 @@ func New(tasks Tasks, cfg Config) Runners {
 				runners[i].State = Failed
 				continue
 			}
-			runners[i].State = Completed // Example of updating state, replace with real task logic
+			runners[i].State = Completed
 		}
 	}()
 	return runners
