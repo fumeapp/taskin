@@ -35,5 +35,4 @@ jobs:
 
       - name: Run tests
         run: go test -race ./...
-        shell: "bash -ilc {0}"
 
