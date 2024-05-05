@@ -8,7 +8,7 @@ import (
 
 func main() {
 
-	tasks := taskin.Taskin(taskin.Tasks{
+	tasks := taskin.New(taskin.Tasks{
 		{
 			Title: "Task 1",
 			// sleep for 3 seconds then return nil
@@ -31,7 +31,7 @@ func main() {
 				return fmt.Errorf("task 2 failed")
 			},
 		},
-	})
+	}, taskin.Defaults)
 	err := tasks.Run()
 
 	if err != nil {
