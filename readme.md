@@ -1,17 +1,24 @@
-# Taskin
-
 <h1 align="center">
     <img src="https://raw.githubusercontent.com/fumeapp/taskin/58464c7afefed78de5b506926dc8edca4fa56316/taskin.png" width="300" />
  <br />
-</h1>
-<br />
+
+
+<p align="center"><strong>📋 Add user-friendly tasks to your CLI </strong></p>
 
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/fumeapp/taskin/857a1b8cbeda577a751b5c7f38885995a894169f/taskin.png" width="300" />
+  <!-- Badges -->
+<a href="https://github.com/fumeapp/taskin/pulls"><img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg" alt="PRs Welcome" /></a> 
+<a href="https://github.com/fumeapp/taskin/releases"><img src="https://img.shields.io/github/v/release/fumeapp/taskin" alt="Release" /></a>
+
+  <!-- <a href="https://github.com/your_username/your_project/issues">
+    <img src="https://img.shields.io/github/issues-closed/your_username/your_project.svg" alt="Issues Closed" />
+  </a> -->
+
 </p>
 
-<p align="center"><strong>🔮 Add user-friendly tasks to your CLI </strong></p>
+
+
 
 
 [![Lint](https://github.com/fumeapp/taskin/actions/workflows/lint.yml/badge.svg)](https://github.com/fumeapp/taskin/actions/workflows/lint.yml)
