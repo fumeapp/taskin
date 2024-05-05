@@ -1,7 +1,9 @@
 
 # Taskin
 
-![logo](/taskin.png)
+<p align="center">
+  <img src="https://github.com/fumeapp/taskin/raw/main/taskin.png" width="300" />
+</p>
 
 [Video](https://github.com/fumeapp/taskin/assets/967369/0305537b-f316-4ed3-80aa-0f654d2e818c)
 
