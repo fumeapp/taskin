@@ -5,8 +5,13 @@
 
 <p align="center"><strong>📋 Add user-friendly tasks to your CLI </strong></p>
 
+
+<p align="center">
+
 [![Lint](https://github.com/fumeapp/taskin/actions/workflows/lint.yml/badge.svg)](https://github.com/fumeapp/taskin/actions/workflows/lint.yml)
 [![Tests](https://github.com/fumeapp/taskin/actions/workflows/test.yml/badge.svg)](https://github.com/fumeapp/taskin/actions/workflows/test.yml)
+
+</p>
 
 ## Examples
 
