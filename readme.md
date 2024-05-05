@@ -1,7 +1,7 @@
 # Taskin
 
 <h1 align="center">
-    <img src="https://raw.githubusercontent.com/fumeapp/taskin/58464c7afefed78de5b506926dc8edca4fa56316/taskin.png" />
+    <img src="https://raw.githubusercontent.com/fumeapp/taskin/58464c7afefed78de5b506926dc8edca4fa56316/taskin.png" width="300" />
  <br />
 </h1>
 <br />
