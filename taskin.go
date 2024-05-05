@@ -1,12 +1,12 @@
 package taskin
 
 import (
+	"dario.cat/mergo"
 	"fmt"
 	"github.com/charmbracelet/bubbles/progress"
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/octoper/go-ray"
 )
 
 func NewRunner(task Task, cfg Config) Runner {
@@ -18,7 +18,6 @@ func NewRunner(task Task, cfg Config) Runner {
 func (task *Task) Progress(current, total int) {
 	task.ShowProgress = TaskProgress{Current: current, Total: total}
 	if !task.Bar.IsAnimating() {
-		ray.Ray("we are making the progress bar")
 		task.Bar = progress.New(task.Config.ProgressOption)
 	}
 	if total != 0 { // Check if TaskProgress is set
@@ -34,6 +33,8 @@ func (r *Runners) Run() error {
 }
 
 func New(tasks Tasks, cfg Config) Runners {
+	// merge cfg with Defaults
+	_ = mergo.Merge(&cfg, Defaults)
 	var runners Runners
 	for _, task := range tasks {
 		// Use NewRunner to ensure runners are initialized with spinners correctly
