@@ -20,8 +20,8 @@
 
 > [!TIP]
 >
-> All output is Github Action friendly, you can view the output
-> [View the Output of each example](https://github.com/fumeapp/taskin/actions/workflows/examples.yml)
+> All output is Github Action friendly! 
+> You can view the output of each example [here](https://github.com/fumeapp/taskin/actions/workflows/examples.yml)
 
 
 
