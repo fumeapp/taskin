@@ -49,8 +49,6 @@ func (task *Task) Progress(current, total int) {
 func (r *Runners) Run() error {
 	program = tea.NewProgram(r, tea.WithInput(nil))
 	_, err := program.Run()
-
-	program.Send(spinner.TickMsg{})
 	return err
 }
 
@@ -67,6 +65,7 @@ func New(tasks Tasks, cfg Config) Runners {
 
 			for _, runner := range runners[:i] {
 				if runner.State == Failed {
+					program.Send(spinner.TickMsg{})
 					return
 				}
 			}
@@ -99,7 +98,6 @@ func New(tasks Tasks, cfg Config) Runners {
 			for _, child := range runners[i].Children {
 				if child.State != Completed {
 					allChildrenCompleted = false
-					program.Send(spinner.TickMsg{})
 					break
 				}
 			}
@@ -107,8 +105,8 @@ func New(tasks Tasks, cfg Config) Runners {
 			// If all child tasks are completed, mark the parent task as completed
 			if allChildrenCompleted && runners[i].State != Failed {
 				runners[i].State = Completed
+				program.Send(spinner.TickMsg{})
 			}
-			program.Send(spinner.TickMsg{})
 		}
 	}()
 	return runners
