@@ -6,8 +6,17 @@
 <p align="center"><strong>📋 Add user-friendly tasks to your CLI </strong></p>
 
 
+[![Go Report Card](https://goreportcard.com/badge/github.com/fumeapp/taskin)](https://goreportcard.com/report/github.com/fumeapp/taskin)
+[![Go Reference](https://pkg.go.dev/badge/github.com/fumeapp/taskin.svg)](https://pkg.go.dev/github.com/fumeapp/taskin)
 [![Lint](https://github.com/fumeapp/taskin/actions/workflows/lint.yml/badge.svg)](https://github.com/fumeapp/taskin/actions/workflows/lint.yml)
 [![Tests](https://github.com/fumeapp/taskin/actions/workflows/test.yml/badge.svg)](https://github.com/fumeapp/taskin/actions/workflows/test.yml)
+
+
+## Installation
+
+```bash
+go get github.com/fumeapp/taskin
+```
 
 ## Examples
 
