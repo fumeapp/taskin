@@ -74,7 +74,7 @@ Using a progress bar for a task
 
 ![Progress](/progress.gif)
 
-![](https://github.com/fumeapp/taskin/blob/main/examples/progress/main.go)
+![Code](https://github.com/fumeapp/taskin/blob/main/examples/progress/main.go)
 
 Customize colors, spinner, and progress bar
 
