@@ -77,7 +77,7 @@ func main() {
 			Title: "Paint the house",
 			Task: func(t *taskin.Task) error {
 				for i := 0; i < 3; i++ {
-					t.Progress(i+1, 5)
+					t.Progress(i+1, 3)
 					t.Title = fmt.Sprintf("Paint the house: [%d/3] walls painted", i+1)
 					time.Sleep(500 * time.Millisecond)
 				}

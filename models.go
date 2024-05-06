@@ -33,7 +33,7 @@ type Tasks []Task
 type Runner struct {
 	Task     Task
 	State    TaskState
-	Spinner  spinner.Model
+	Spinner  *spinner.Model
 	Config   Config
 	Children Runners
 }

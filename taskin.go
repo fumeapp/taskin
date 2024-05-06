@@ -7,11 +7,21 @@ import (
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"os"
 )
 
+var program *tea.Program
+
 func NewRunner(task Task, cfg Config) Runner {
-	s := spinner.New(spinner.WithSpinner(cfg.Spinner))           // Initialize with a spinner model
-	s.Style = lipgloss.NewStyle().Foreground(cfg.Colors.Spinner) // Styling spinner
+
+	var spinr *spinner.Model
+
+	if os.Getenv("CI") == "" {
+		spinnerModel := spinner.New(spinner.WithSpinner(cfg.Spinner))           // Initialize with a spinner model
+		spinnerModel.Style = lipgloss.NewStyle().Foreground(cfg.Colors.Spinner) // Styling spinner
+		spinr = &spinnerModel
+	}
+
 	children := make(Runners, len(task.Tasks))
 	for i, childTask := range task.Tasks {
 		childTask.Config = cfg
@@ -22,7 +32,7 @@ func NewRunner(task Task, cfg Config) Runner {
 			return nil
 		}
 	}
-	return Runner{Task: task, State: NotStarted, Spinner: s, Config: cfg, Children: children}
+	return Runner{Task: task, State: NotStarted, Spinner: spinr, Config: cfg, Children: children}
 }
 
 func (task *Task) Progress(current, total int) {
@@ -37,20 +47,21 @@ func (task *Task) Progress(current, total int) {
 }
 
 func (r *Runners) Run() error {
-	p := tea.NewProgram(r, tea.WithInput(nil))
-	_, err := p.Run()
+	program = tea.NewProgram(r, tea.WithInput(nil))
+	_, err := program.Run()
+
+	program.Send(spinner.TickMsg{})
 	return err
 }
 
 func New(tasks Tasks, cfg Config) Runners {
-	// merge cfg with Defaults
 	_ = mergo.Merge(&cfg, Defaults)
 	var runners Runners
 	for _, task := range tasks {
-		// Use NewRunner to ensure runners are initialized with spinners correctly
 		task.Config = cfg
 		runners = append(runners, NewRunner(task, cfg))
 	}
+
 	go func() {
 		for i := range runners {
 
@@ -65,6 +76,7 @@ func New(tasks Tasks, cfg Config) Runners {
 			if err != nil {
 				runners[i].Task.Title = fmt.Sprintf("%s - Error: %s", runners[i].Task.Title, err.Error())
 				runners[i].State = Failed
+				program.Send(spinner.TickMsg{})
 				continue
 			}
 
@@ -76,6 +88,7 @@ func New(tasks Tasks, cfg Config) Runners {
 					runners[i].Children[j].Task.Title = fmt.Sprintf("%s - Error: %s", runners[i].Children[j].Task.Title, err.Error())
 					runners[i].Children[j].State = Failed
 					runners[i].State = Failed // Mark parent task as Failed
+					program.Send(spinner.TickMsg{})
 					break
 				}
 				runners[i].Children[j].State = Completed
@@ -86,6 +99,7 @@ func New(tasks Tasks, cfg Config) Runners {
 			for _, child := range runners[i].Children {
 				if child.State != Completed {
 					allChildrenCompleted = false
+					program.Send(spinner.TickMsg{})
 					break
 				}
 			}
@@ -94,6 +108,7 @@ func New(tasks Tasks, cfg Config) Runners {
 			if allChildrenCompleted && runners[i].State != Failed {
 				runners[i].State = Completed
 			}
+			program.Send(spinner.TickMsg{})
 		}
 	}()
 	return runners

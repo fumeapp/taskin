@@ -4,14 +4,19 @@ import (
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"os"
 )
 
 func (r *Runners) Init() tea.Cmd {
 	var cmds []tea.Cmd
 	for i := range *r {
-		cmds = append(cmds, (*r)[i].Spinner.Tick)
+		if (*r)[i].Spinner != nil {
+			cmds = append(cmds, (*r)[i].Spinner.Tick)
+		}
 		for j := range (*r)[i].Children {
-			cmds = append(cmds, (*r)[i].Children[j].Spinner.Tick)
+			if (*r)[i].Children[j].Spinner != nil {
+				cmds = append(cmds, (*r)[i].Children[j].Spinner.Tick)
+			}
 		}
 	}
 	return tea.Batch(cmds...)
@@ -27,16 +32,20 @@ func (r *Runners) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		for i := range *r {
 
 			if (*r)[i].State == Running || (*r)[i].State == NotStarted {
-				newSpinner, cmd := (*r)[i].Spinner.Update(msg)
-				(*r)[i].Spinner = newSpinner
-				cmds = append(cmds, cmd)
+				if os.Getenv("CI") == "" {
+					newSpinner, cmd := (*r)[i].Spinner.Update(msg)
+					(*r)[i].Spinner = &newSpinner
+					cmds = append(cmds, cmd)
+				}
 			}
 
 			for j := range (*r)[i].Children {
 				if (*r)[i].Children[j].State == Running || (*r)[i].Children[j].State == NotStarted {
-					newSpinner, cmd := (*r)[i].Children[j].Spinner.Update(msg)
-					(*r)[i].Children[j].Spinner = newSpinner
-					cmds = append(cmds, cmd)
+					if os.Getenv("CI") == "" {
+						newSpinner, cmd := (*r)[i].Children[j].Spinner.Update(msg)
+						(*r)[i].Children[j].Spinner = &newSpinner
+						cmds = append(cmds, cmd)
+					}
 				}
 			}
 
@@ -72,9 +81,17 @@ func (r *Runners) View() string {
 			} else {
 				if runner.Task.ShowProgress.Total != 0 {
 					percent := float64(runner.Task.ShowProgress.Current) / float64(runner.Task.ShowProgress.Total)
-					status = runner.Spinner.View() + runner.Task.Title + " " + runner.Task.Bar.ViewAs(percent)
+					if runner.Spinner != nil {
+						status = runner.Spinner.View() + runner.Task.Title + " " + runner.Task.Bar.ViewAs(percent)
+					} else {
+						status = "⣟ " + runner.Task.Title + " " + runner.Task.Bar.ViewAs(percent)
+					}
 				} else {
-					status = runner.Spinner.View() + runner.Task.Title
+					if runner.Spinner != nil {
+						status = runner.Spinner.View() + runner.Task.Title
+					} else {
+						status = "⣟ " + runner.Task.Title
+					}
 				}
 			}
 		case Completed:
@@ -92,9 +109,17 @@ func (r *Runners) View() string {
 			case Running:
 				if child.Task.ShowProgress.Total != 0 {
 					percent := float64(child.Task.ShowProgress.Current) / float64(child.Task.ShowProgress.Total)
-					status = child.Spinner.View() + child.Task.Title + " " + child.Task.Bar.ViewAs(percent)
+					if child.Spinner == nil {
+						status = "⣟ " + child.Task.Title + " " + child.Task.Bar.ViewAs(percent)
+					} else {
+						status = child.Spinner.View() + child.Task.Title + " " + child.Task.Bar.ViewAs(percent)
+					}
 				} else {
-					status = child.Spinner.View() + child.Task.Title
+					if child.Spinner == nil {
+						status = "⣟ " + child.Task.Title
+					} else {
+						status = child.Spinner.View() + child.Task.Title
+					}
 				}
 			case Completed:
 				status = lipgloss.NewStyle().Foreground(child.Config.Colors.Success).Render("✔") + " " + child.Task.Title // Green checkmark
