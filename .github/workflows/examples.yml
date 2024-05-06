@@ -1,0 +1,27 @@
+name: Run Examples
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  run-examples:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: 1.21
+
+    - name: Run Simple
+      run: go run examples/simple/main.go
+    - name: Run Progress
+      run: go run examples/progress/main.go
+    - name: Run Multi
+      run: go run examples/multi/main.go
