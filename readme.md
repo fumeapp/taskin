@@ -1,6 +1,10 @@
-![](/taskin.png)
+<h1 align="center">
+    <img src="https://github.com/fumeapp/taskin/raw/main/taskin.png" width="300" />
+ <br />
+</h1>
 
-<strong>📋 Add user-friendly tasks to your CLI </strong>
+<p align="center"><strong>📋 Add user-friendly tasks to your CLI </strong></p>
+
 
 [![Lint](https://github.com/fumeapp/taskin/actions/workflows/lint.yml/badge.svg)](https://github.com/fumeapp/taskin/actions/workflows/lint.yml)
 [![Tests](https://github.com/fumeapp/taskin/actions/workflows/test.yml/badge.svg)](https://github.com/fumeapp/taskin/actions/workflows/test.yml)
