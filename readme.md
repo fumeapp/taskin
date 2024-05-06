@@ -1,6 +1,9 @@
-<img src="https://github.com/fumeapp/taskin/raw/main/taskin.png" width="300" />
-<strong>📋 Add user-friendly tasks to your CLI </strong>
-<br />
+<h1 align="center">
+    <img src="https://github.com/fumeapp/taskin/raw/main/taskin.png" width="300" />
+ <br />
+</h1>
+
+<p align="center"><strong>📋 Add user-friendly tasks to your CLI </strong></p>
 <br />
 
 ![Multi](/multi.gif)
