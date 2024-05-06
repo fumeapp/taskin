@@ -37,7 +37,7 @@ func (task *Task) Progress(current, total int) {
 }
 
 func (r *Runners) Run() error {
-	p := tea.NewProgram(r)
+	p := tea.NewProgram(r, tea.WithInput(nil))
 	_, err := p.Run()
 	return err
 }
