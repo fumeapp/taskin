@@ -10,13 +10,27 @@ import (
 
 func TestConfig(t *testing.T) {
 	config := Config{
-		Spinner:        spinner.Dot,
-		ProgressOption: progress.WithDefaultGradient(),
+		Options: ConfigOptions{
+			ExitOnFailure: true,
+		},
+		Spinner: spinner.Dot,
 		Colors: ConfigColors{
-			Spinner: lipgloss.Color("214"),
-			Pending: lipgloss.Color("21"),
-			Success: lipgloss.Color("46"),
-			Failure: lipgloss.Color("196"),
+			Spinner:       lipgloss.Color("214"),
+			Pending:       lipgloss.Color("21"),
+			Success:       lipgloss.Color("46"),
+			Failure:       lipgloss.Color("196"),
+			ParentStarted: lipgloss.Color("214"),
+		},
+		Chars: ConfigChars{
+			ParentStarted: "»",
+			NotStarted:    "•",
+			Success:       "✔",
+			Failure:       "✘",
+		},
+		ProgressOptions: []progress.Option{
+			progress.WithDefaultGradient(),
+			progress.WithoutPercentage(),
+			progress.WithWidth(10),
 		},
 	}
 
@@ -38,5 +52,9 @@ func TestConfig(t *testing.T) {
 
 	if config.Colors.Failure != lipgloss.Color("196") {
 		t.Errorf("Expected failure color to be '196', got '%s'", config.Colors.Failure)
+	}
+
+	if config.Options.ExitOnFailure != true {
+		t.Errorf("Expected ExitOnFailure to be 'true', got '%v'", config.Options.ExitOnFailure)
 	}
 }
