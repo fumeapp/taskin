@@ -1,4 +1,4 @@
-[!](/taskin.png)
+![](/taskin.png)
 
 <strong>📋 Add user-friendly tasks to your CLI </strong>
 
