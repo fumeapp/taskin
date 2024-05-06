@@ -27,24 +27,28 @@ go get github.com/fumeapp/taskin
 
 Simplest way to line up and fire off tasks
 
+https://github.com/fumeapp/taskin/blob/3cd766c21e5eaba5edb33f38d3781d6cf814f9f9/examples/simple/main.go#L11-L33
+
 ![Simple](/simple.gif)
 
-https://github.com/fumeapp/taskin/blob/3cd766c21e5eaba5edb33f38d3781d6cf814f9f9/examples/simple/main.go#L11-L33
 
 Using a progress bar for a task
 
+https://github.com/fumeapp/taskin/blob/06b4d112f7d2dcf9fb4ee9b210f0be2d5cda03b5/examples/progress/main.go#L11-L24
+
 ![Progress](/progress.gif)
 
-https://github.com/fumeapp/taskin/blob/06b4d112f7d2dcf9fb4ee9b210f0be2d5cda03b5/examples/progress/main.go#L11-L24
 
 Customize colors, spinner, and progress bar
 
+https://github.com/fumeapp/taskin/blob/3cd766c21e5eaba5edb33f38d3781d6cf814f9f9/examples/custom/main.go#L13-L54
+
 ![Custom](/custom.gif)
 
-https://github.com/fumeapp/taskin/blob/3cd766c21e5eaba5edb33f38d3781d6cf814f9f9/examples/custom/main.go#L13-L54
 
 Add multiple tasks to a single task
 
+https://github.com/fumeapp/taskin/blob/3cd766c21e5eaba5edb33f38d3781d6cf814f9f9/examples/multi/main.go#L23-L34
+
 ![Multi](/multi.gif)
 
-https://github.com/fumeapp/taskin/blob/3cd766c21e5eaba5edb33f38d3781d6cf814f9f9/examples/multi/main.go#L23-L34
