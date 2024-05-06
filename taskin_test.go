@@ -62,3 +62,20 @@ func TestNew(t *testing.T) {
 		t.Errorf("Expected New to return 1 runner, got '%d'", len(runners))
 	}
 }
+
+func TestTaskProgress(t *testing.T) {
+	task := Task{
+		Title: "Test Task",
+		Task:  func(t *Task) error { return nil },
+	}
+	cfg := Config{
+		Spinner: spinner.Dot,
+	}
+
+	runner := NewRunner(task, cfg)
+	runner.Task.Progress(1, 10)
+
+	if runner.Task.ShowProgress.Current != 1 || runner.Task.ShowProgress.Total != 10 {
+		t.Errorf("Expected TaskProgress to be 1/10, got %d/%d", runner.Task.ShowProgress.Current, runner.Task.ShowProgress.Total)
+	}
+}
