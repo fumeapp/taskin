@@ -7,6 +7,7 @@
 <br />
 
 
+[![Release](https://img.shields.io/github/v/release/fumeapp/taskin)](https://github.com/fumeapp/taskin/releases)
 [![Go Report Card](https://goreportcard.com/badge/github.com/fumeapp/taskin)](https://goreportcard.com/report/github.com/fumeapp/taskin)
 [![Go Reference](https://pkg.go.dev/badge/github.com/fumeapp/taskin.svg)](https://pkg.go.dev/github.com/fumeapp/taskin)
 [![Lint](https://github.com/fumeapp/taskin/actions/workflows/lint.yml/badge.svg)](https://github.com/fumeapp/taskin/actions/workflows/lint.yml)
