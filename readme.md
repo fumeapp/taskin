@@ -18,10 +18,10 @@
 [![Examples](https://github.com/fumeapp/taskin/actions/workflows/examples.yml/badge.svg)](https://github.com/fumeapp/taskin/actions/workflows/examples.yml)
 
 
-> [!FEATURE]
+> [!NOTE]
 >
-> All output is Github Action friendly, you can view the output 
-> [View the Output](https://github.com/fumeapp/taskin/actions/workflows/examples.yml)
+> All output is Github Action friendly, you can view the output
+> [View the Output of each example](https://github.com/fumeapp/taskin/actions/workflows/examples.yml)
 
 
 
