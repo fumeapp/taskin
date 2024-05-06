@@ -2,6 +2,7 @@
 <br />
 <strong>📋 Add user-friendly tasks to your CLI </strong>
 <br />
+<br />
 
 ![Multi](/multi.gif)
 
