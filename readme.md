@@ -15,6 +15,14 @@
 [![Lint](https://github.com/fumeapp/taskin/actions/workflows/lint.yml/badge.svg)](https://github.com/fumeapp/taskin/actions/workflows/lint.yml)
 [![Tests](https://github.com/fumeapp/taskin/actions/workflows/test.yml/badge.svg)](https://github.com/fumeapp/taskin/actions/workflows/test.yml)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/fumeapp/taskin/pulls)
+[![Examples](https://github.com/fumeapp/taskin/actions/workflows/examples.yml/badge.svg)](https://github.com/fumeapp/taskin/actions/workflows/examples.yml)
+
+
+> [!FEATURE]
+>
+> All output is Github Action friendly, you can view the output 
+> [View the Output](https://github.com/fumeapp/taskin/actions/workflows/examples.yml)
+
 
 
 ## Installation
@@ -46,7 +54,8 @@ https://github.com/fumeapp/taskin/blob/3cd766c21e5eaba5edb33f38d3781d6cf814f9f9/
 ![Custom](/custom.gif)
 
 
-Add multiple tasks to a single task
+
+Nest tasks inside tasks
 
 https://github.com/fumeapp/taskin/blob/3cd766c21e5eaba5edb33f38d3781d6cf814f9f9/examples/multi/main.go#L23-L34
 
