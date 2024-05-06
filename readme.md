@@ -1,5 +1,4 @@
 <img src="https://github.com/fumeapp/taskin/raw/main/taskin.png" width="300" />
-<br />
 <strong>📋 Add user-friendly tasks to your CLI </strong>
 <br />
 <br />
