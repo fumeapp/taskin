@@ -12,13 +12,23 @@ import (
 func NewRunner(task Task, cfg Config) Runner {
 	s := spinner.New(spinner.WithSpinner(cfg.Spinner))           // Initialize with a spinner model
 	s.Style = lipgloss.NewStyle().Foreground(cfg.Colors.Spinner) // Styling spinner
-	return Runner{Task: task, State: NotStarted, Spinner: s, Config: cfg}
+	children := make(Runners, len(task.Tasks))
+	for i, childTask := range task.Tasks {
+		childTask.Config = cfg
+		children[i] = NewRunner(childTask, cfg)
+	}
+	if task.Task == nil {
+		task.Task = func(t *Task) error {
+			return nil
+		}
+	}
+	return Runner{Task: task, State: NotStarted, Spinner: s, Config: cfg, Children: children}
 }
 
 func (task *Task) Progress(current, total int) {
 	task.ShowProgress = TaskProgress{Current: current, Total: total}
 	if !task.Bar.IsAnimating() {
-		task.Bar = progress.New(task.Config.ProgressOption)
+		task.Bar = progress.New(task.Config.ProgressOptions...)
 	}
 	if total != 0 { // Check if TaskProgress is set
 		percent := float64(current) / float64(total)
@@ -43,6 +53,13 @@ func New(tasks Tasks, cfg Config) Runners {
 	}
 	go func() {
 		for i := range runners {
+
+			for _, runner := range runners[:i] {
+				if runner.State == Failed {
+					return
+				}
+			}
+
 			runners[i].State = Running
 			err := runners[i].Task.Task(&runners[i].Task)
 			if err != nil {
@@ -50,7 +67,33 @@ func New(tasks Tasks, cfg Config) Runners {
 				runners[i].State = Failed
 				continue
 			}
-			runners[i].State = Completed
+
+			// Run child tasks
+			for j := range runners[i].Children {
+				runners[i].Children[j].State = Running
+				err := runners[i].Children[j].Task.Task(&runners[i].Children[j].Task)
+				if err != nil {
+					runners[i].Children[j].Task.Title = fmt.Sprintf("%s - Error: %s", runners[i].Children[j].Task.Title, err.Error())
+					runners[i].Children[j].State = Failed
+					runners[i].State = Failed // Mark parent task as Failed
+					break
+				}
+				runners[i].Children[j].State = Completed
+			}
+
+			// Check if all child tasks are completed
+			allChildrenCompleted := true
+			for _, child := range runners[i].Children {
+				if child.State != Completed {
+					allChildrenCompleted = false
+					break
+				}
+			}
+
+			// If all child tasks are completed, mark the parent task as completed
+			if allChildrenCompleted && runners[i].State != Failed {
+				runners[i].State = Completed
+			}
 		}
 	}()
 	return runners

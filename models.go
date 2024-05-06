@@ -20,6 +20,7 @@ type Task struct {
 	ShowProgress TaskProgress
 	Bar          progress.Model
 	Config       Config
+	Tasks        Tasks
 }
 
 type TaskProgress struct {
@@ -30,10 +31,11 @@ type TaskProgress struct {
 type Tasks []Task
 
 type Runner struct {
-	Task    Task
-	State   TaskState
-	Spinner spinner.Model
-	Config  Config
+	Task     Task
+	State    TaskState
+	Spinner  spinner.Model
+	Config   Config
+	Children Runners
 }
 
 type Runners []Runner

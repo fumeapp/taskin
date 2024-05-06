@@ -11,7 +11,6 @@ func main() {
 	tasks := taskin.New(taskin.Tasks{
 		{
 			Title: "Task 1",
-			// sleep for 3 seconds then return nil
 			Task: func(t *taskin.Task) error {
 				for i := 0; i < 3; i++ {
 					t.Title = fmt.Sprintf("Task 1: [%d/3] seconds have passed", i+1)
@@ -22,7 +21,6 @@ func main() {
 		},
 		{
 			Title: "Task 2",
-			// sleep for 3 seconds then return nil
 			Task: func(t *taskin.Task) error {
 				for i := 0; i < 3; i++ {
 					t.Title = fmt.Sprintf("Task 2: [%d/3] seconds have passed", i+1)
