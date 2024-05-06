@@ -4,6 +4,7 @@
 </h1>
 
 <p align="center"><strong>📋 Add user-friendly tasks to your CLI </strong></p>
+<br />
 
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/fumeapp/taskin)](https://goreportcard.com/report/github.com/fumeapp/taskin)
