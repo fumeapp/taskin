@@ -68,8 +68,29 @@ func (r *Runners) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return r, nil
 }
 
+func (r *Runners) checkTasksState() (allDone, anyFailed bool) {
+	allDone = true
+	for _, runner := range *r {
+		if runner.State != Completed && runner.State != Failed {
+			allDone = false
+		}
+		if runner.State == Failed {
+			anyFailed = true
+		}
+	}
+	return
+}
+
 func (r *Runners) View() string {
 	var view string
+
+	// check if CI is set, if it is then don't return the view until all tasks are completed or one has failed
+	if os.Getenv("CI") != "" {
+		allDone, _ := r.checkTasksState()
+		if !allDone {
+			return ""
+		}
+	}
 	for _, runner := range *r {
 		status := ""
 		switch runner.State {

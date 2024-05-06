@@ -65,7 +65,6 @@ func New(tasks Tasks, cfg Config) Runners {
 
 			for _, runner := range runners[:i] {
 				if runner.State == Failed {
-					program.Send(spinner.TickMsg{})
 					return
 				}
 			}
