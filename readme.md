@@ -25,7 +25,6 @@ go get github.com/fumeapp/taskin
 
 ## Examples
 
-### Simple
 Simplest way to line up and fire off tasks
 
 ![Simple](/simple.gif)
@@ -71,7 +70,6 @@ func main() {
 }
 ```
 
-## Progress
 Using a progress bar for a task
 
 ![Progress](/progress.gif)
@@ -109,7 +107,6 @@ func main() {
 }
 ```
 
-## Custom
 Customize colors, spinner, and progress bar
 
 ![Custom](/custom.gif)
@@ -173,8 +170,6 @@ func main() {
 
 ```
 
-
-## Multi Dimensional
 Add multiple tasks to a single task
 
 ![Multi](/multi.gif)
@@ -183,66 +178,66 @@ Add multiple tasks to a single task
 package main
 
 import (
-	"fmt"
-	"github.com/fumeapp/taskin"
-	"time"
+  "fmt"
+  "github.com/fumeapp/taskin"
+  "time"
 )
 
 func main() {
 
-	tasks := taskin.New(taskin.Tasks{
-		{
-			Title: "Mow the lawn",
-			Task: func(t *taskin.Task) error {
-				for i := 0; i < 3; i++ {
-					t.Title = fmt.Sprintf("Mow the lawn: [%d/3] passes", i+1)
-					time.Sleep(500 * time.Millisecond)
-				}
-				return nil
-			},
-		},
-		{
-			Title: "Pluck the Chickens",
-			Tasks: taskin.Tasks{
-				{
-					Title: "Pluck the silkies",
-					Task: func(t *taskin.Task) error {
-						for i := 0; i < 3; i++ {
-							t.Title = fmt.Sprintf(" [%d/3] silkies plucked", i+1)
-							time.Sleep(500 * time.Millisecond)
-						}
-						return nil
-					},
-				},
-				{
-					Title: "Pluck the leghorns",
-					Task: func(t *taskin.Task) error {
-						for i := 0; i < 3; i++ {
-							t.Title = fmt.Sprintf(" [%d/3] leghorns plucked", i+1)
-							time.Sleep(500 * time.Millisecond)
-						}
-						return nil
-					},
-				},
-			},
-		},
-		{
-			Title: "Paint the house",
-			Task: func(t *taskin.Task) error {
-				for i := 0; i < 3; i++ {
-					t.Progress(i+1, 5)
-					t.Title = fmt.Sprintf("Paint the house: [%d/3] walls painted", i+1)
-					time.Sleep(500 * time.Millisecond)
-				}
-				return nil
-			},
-		},
-	}, taskin.Defaults)
-	err := tasks.Run()
+  tasks := taskin.New(taskin.Tasks{
+    {
+      Title: "Mow the lawn",
+      Task: func(t *taskin.Task) error {
+        for i := 0; i < 3; i++ {
+          t.Title = fmt.Sprintf("Mow the lawn: [%d/3] passes", i+1)
+          time.Sleep(500 * time.Millisecond)
+        }
+        return nil
+      },
+    },
+    {
+      Title: "Pluck the Chickens",
+      Tasks: taskin.Tasks{
+        {
+          Title: "Pluck the silkies",
+          Task: func(t *taskin.Task) error {
+            for i := 0; i < 3; i++ {
+              t.Title = fmt.Sprintf(" [%d/3] silkies plucked", i+1)
+              time.Sleep(500 * time.Millisecond)
+            }
+            return nil
+          },
+        },
+        {
+          Title: "Pluck the leghorns",
+          Task: func(t *taskin.Task) error {
+            for i := 0; i < 3; i++ {
+              t.Title = fmt.Sprintf(" [%d/3] leghorns plucked", i+1)
+              time.Sleep(500 * time.Millisecond)
+            }
+            return nil
+          },
+        },
+      },
+    },
+    {
+      Title: "Paint the house",
+      Task: func(t *taskin.Task) error {
+        for i := 0; i < 3; i++ {
+          t.Progress(i+1, 5)
+          t.Title = fmt.Sprintf("Paint the house: [%d/3] walls painted", i+1)
+          time.Sleep(500 * time.Millisecond)
+        }
+        return nil
+      },
+    },
+  }, taskin.Defaults)
+  err := tasks.Run()
 
-	if err != nil {
-		panic(err)
-	}
+  if err != nil {
+    panic(err)
+  }
 }
 
 ```
