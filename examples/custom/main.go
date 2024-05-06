@@ -46,8 +46,10 @@ func main() {
 			},
 		},
 	}, taskin.Config{
-		Spinner:        spinner.Moon,
-		ProgressOption: progress.WithScaledGradient("#6667AB", "#34D399"),
+		Spinner: spinner.Moon,
+		ProgressOptions: []progress.Option{
+			progress.WithScaledGradient("#6667AB", "#34D399"),
+		},
 	})
 	err := tasks.Run()
 
