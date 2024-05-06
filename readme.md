@@ -16,7 +16,7 @@
 [![Tests](https://github.com/fumeapp/taskin/actions/workflows/test.yml/badge.svg)](https://github.com/fumeapp/taskin/actions/workflows/test.yml)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/fumeapp/taskin/pulls)
 [![Examples](https://github.com/fumeapp/taskin/actions/workflows/examples.yml/badge.svg)](https://github.com/fumeapp/taskin/actions/workflows/examples.yml)
-[![Phorm]](https://img.shields.io/badge/Phorm-Enabled-brightgreen)](https://www.phorm.ai/query?projectId=4d6b35fb-2ee0-40a3-ad5f-952dc5f69365)
+[![Phorm](https://img.shields.io/badge/Phorm-AskAI-pink)](https://www.phorm.ai/query?projectId=4d6b35fb-2ee0-40a3-ad5f-952dc5f69365)
 
 
 > [!TIP]
