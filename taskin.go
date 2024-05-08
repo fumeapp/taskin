@@ -16,7 +16,7 @@ func NewRunner(task Task, cfg Config) Runner {
 
 	var spinr *spinner.Model
 
-	if os.Getenv("CI") == "" {
+	if !IsCI() {
 		spinnerModel := spinner.New(spinner.WithSpinner(cfg.Spinner))           // Initialize with a spinner model
 		spinnerModel.Style = lipgloss.NewStyle().Foreground(cfg.Colors.Spinner) // Styling spinner
 		spinr = &spinnerModel
@@ -36,6 +36,9 @@ func NewRunner(task Task, cfg Config) Runner {
 }
 
 func (task *Task) Progress(current, total int) {
+	if IsCI() {
+		return
+	}
 	task.ShowProgress = TaskProgress{Current: current, Total: total}
 	if !task.Bar.IsAnimating() {
 		task.Bar = progress.New(task.Config.ProgressOptions...)
@@ -109,4 +112,8 @@ func New(tasks Tasks, cfg Config) Runners {
 		}
 	}()
 	return runners
+}
+
+func IsCI() bool {
+	return os.Getenv("CI") != ""
 }
