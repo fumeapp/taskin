@@ -4,7 +4,6 @@ import (
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"os"
 )
 
 func (r *Runners) Init() tea.Cmd {
@@ -32,7 +31,7 @@ func (r *Runners) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		for i := range *r {
 
 			if (*r)[i].State == Running || (*r)[i].State == NotStarted {
-				if os.Getenv("CI") == "" {
+				if !IsCI() {
 					newSpinner, cmd := (*r)[i].Spinner.Update(msg)
 					(*r)[i].Spinner = &newSpinner
 					cmds = append(cmds, cmd)
@@ -41,7 +40,7 @@ func (r *Runners) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			for j := range (*r)[i].Children {
 				if (*r)[i].Children[j].State == Running || (*r)[i].Children[j].State == NotStarted {
-					if os.Getenv("CI") == "" {
+					if !IsCI() {
 						newSpinner, cmd := (*r)[i].Children[j].Spinner.Update(msg)
 						(*r)[i].Children[j].Spinner = &newSpinner
 						cmds = append(cmds, cmd)
@@ -85,7 +84,7 @@ func (r *Runners) View() string {
 	var view string
 
 	// check if CI is set, if it is then don't return the view until all tasks are completed or one has failed
-	if os.Getenv("CI") != "" {
+	if IsCI() {
 		allDone, _ := r.checkTasksState()
 		if !allDone {
 			return ""
