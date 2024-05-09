@@ -36,10 +36,10 @@ func NewRunner(task Task, cfg Config) Runner {
 }
 
 func (task *Task) Progress(current, total int) {
+	task.ShowProgress = TaskProgress{Current: current, Total: total}
 	if IsCI() {
 		return
 	}
-	task.ShowProgress = TaskProgress{Current: current, Total: total}
 	if !task.Bar.IsAnimating() {
 		task.Bar = progress.New(task.Config.ProgressOptions...)
 	}
