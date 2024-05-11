@@ -77,7 +77,9 @@ func New(tasks Tasks, cfg Config) Runners {
 			if err != nil {
 				runners[i].Task.Title = fmt.Sprintf("%s - Error: %s", runners[i].Task.Title, err.Error())
 				runners[i].State = Failed
-				program.Send(spinner.TickMsg{})
+				if program != nil {
+					program.Send(spinner.TickMsg{})
+				}
 				continue
 			}
 
@@ -89,7 +91,9 @@ func New(tasks Tasks, cfg Config) Runners {
 					runners[i].Children[j].Task.Title = fmt.Sprintf("%s - Error: %s", runners[i].Children[j].Task.Title, err.Error())
 					runners[i].Children[j].State = Failed
 					runners[i].State = Failed // Mark parent task as Failed
-					program.Send(spinner.TickMsg{})
+					if program != nil {
+						program.Send(spinner.TickMsg{})
+					}
 					break
 				}
 				runners[i].Children[j].State = Completed
@@ -107,7 +111,9 @@ func New(tasks Tasks, cfg Config) Runners {
 			// If all child tasks are completed, mark the parent task as completed
 			if allChildrenCompleted && runners[i].State != Failed {
 				runners[i].State = Completed
-				program.Send(spinner.TickMsg{})
+				if program != nil {
+					program.Send(spinner.TickMsg{})
+				}
 			}
 		}
 	}()
