@@ -7,7 +7,9 @@ import (
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"io"
 	"os"
+	"regexp"
 )
 
 var program *tea.Program
@@ -49,13 +51,38 @@ func (task *Task) Progress(current, total int) {
 	}
 }
 
+type ansiEscapeCodeFilter struct {
+	writer io.Writer
+}
+
+func (f *ansiEscapeCodeFilter) Write(p []byte) (n int, err error) {
+	// Corrected regular expression to match ANSI escape codes
+	re := regexp.MustCompile(` *\x1b\[[0-?]*[ -/]*[@-~]`)
+	// Remove the escape codes from the input
+	p = re.ReplaceAll(p, []byte{})
+	// Write the filtered input to the original writer
+	return f.writer.Write(p)
+}
+
 func (r *Runners) Run() error {
-	program = tea.NewProgram(r, tea.WithInput(nil))
+	m := &Model{Runners: *r, Shutdown: false, ShutdownError: nil}
+	if IsCI() {
+		program = tea.NewProgram(m, tea.WithInput(nil), tea.WithOutput(&ansiEscapeCodeFilter{writer: os.Stdout}))
+	} else {
+		program = tea.NewProgram(m, tea.WithInput(nil))
+	}
 	_, err := program.Run()
+	if err != nil {
+		program.Send(TerminateWithError{Error: err})
+	}
+	if m.Shutdown && m.ShutdownError != nil {
+		return m.ShutdownError
+	}
 	return err
 }
 
 func New(tasks Tasks, cfg Config) Runners {
+
 	_ = mergo.Merge(&cfg, Defaults)
 	var runners Runners
 	for _, task := range tasks {
@@ -67,7 +94,7 @@ func New(tasks Tasks, cfg Config) Runners {
 		for i := range runners {
 
 			for _, runner := range runners[:i] {
-				if runner.State == Failed {
+				if runner.State == Failed && runner.Config.Options.ExitOnFailure {
 					return
 				}
 			}
@@ -75,10 +102,10 @@ func New(tasks Tasks, cfg Config) Runners {
 			runners[i].State = Running
 			err := runners[i].Task.Task(&runners[i].Task)
 			if err != nil {
-				runners[i].Task.Title = fmt.Sprintf("%s - Error: %s", runners[i].Task.Title, err.Error())
+				runners[i].Task.Title = fmt.Sprintf("%s - %s", runners[i].Task.Title, err.Error())
 				runners[i].State = Failed
 				if program != nil {
-					program.Send(spinner.TickMsg{})
+					program.Send(TerminateWithError{Error: err})
 				}
 				continue
 			}
@@ -92,7 +119,7 @@ func New(tasks Tasks, cfg Config) Runners {
 					runners[i].Children[j].State = Failed
 					runners[i].State = Failed // Mark parent task as Failed
 					if program != nil {
-						program.Send(spinner.TickMsg{})
+						program.Send(TerminateWithError{Error: err})
 					}
 					break
 				}

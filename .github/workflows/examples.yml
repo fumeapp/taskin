@@ -21,6 +21,9 @@ jobs:
 
     - name: Run Simple
       run: go run examples/simple/main.go
+    - name: Run Error
+      run: go run examples/error/main.go
+      continue-on-error: true
     - name: Run Progress
       run: go run examples/progress/main.go
     - name: Run Multi
