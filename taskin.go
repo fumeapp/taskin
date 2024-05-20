@@ -1,12 +1,12 @@
 package taskin
 
 import (
-	"dario.cat/mergo"
 	"fmt"
 	"github.com/charmbracelet/bubbles/progress"
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/imdario/mergo"
 	"io"
 	"os"
 	"regexp"
