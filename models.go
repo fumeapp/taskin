@@ -5,6 +5,10 @@ import (
 	"github.com/charmbracelet/bubbles/spinner"
 )
 
+type TerminateWithError struct {
+	Error error
+}
+
 type TaskState int
 
 const (
@@ -39,3 +43,9 @@ type Runner struct {
 }
 
 type Runners []Runner
+
+type Model struct {
+	Runners       Runners
+	Shutdown      bool
+	ShutdownError error
+}

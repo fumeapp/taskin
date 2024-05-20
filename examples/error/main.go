@@ -36,6 +36,7 @@ func main() {
 			},
 		},
 	}, taskin.Defaults)
+	// }, taskin.Config{Options: taskin.ConfigOptions{ExitOnFailure: false}})
 	err := tasks.Run()
 
 	if err != nil {

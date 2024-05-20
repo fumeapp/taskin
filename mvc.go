@@ -6,70 +6,83 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-func (r *Runners) Init() tea.Cmd {
+func (m *Model) Init() tea.Cmd {
 	var cmds []tea.Cmd
-	for i := range *r {
-		if (*r)[i].Spinner != nil {
-			cmds = append(cmds, (*r)[i].Spinner.Tick)
+	for i := range m.Runners {
+		if (m.Runners)[i].Spinner != nil {
+			cmds = append(cmds, (m.Runners)[i].Spinner.Tick)
 		}
-		for j := range (*r)[i].Children {
-			if (*r)[i].Children[j].Spinner != nil {
-				cmds = append(cmds, (*r)[i].Children[j].Spinner.Tick)
+		for j := range (m.Runners)[i].Children {
+			if (m.Runners)[i].Children[j].Spinner != nil {
+				cmds = append(cmds, (m.Runners)[i].Children[j].Spinner.Tick)
 			}
 		}
 	}
 	return tea.Batch(cmds...)
 }
 
-func (r *Runners) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
+
+	if m.Shutdown && m.ShutdownError != nil {
+		return m, tea.Quit
+	}
 
 	switch msg := msg.(type) {
 
+	case TerminateWithError:
+		m.SetShutdown(msg.Error)
+		return m, tea.Quit
+
 	case spinner.TickMsg:
 		allDone := true
-		for i := range *r {
+		for i := range m.Runners {
 
-			if (*r)[i].State == Running || (*r)[i].State == NotStarted {
+			if (m.Runners)[i].State == Running || (m.Runners)[i].State == NotStarted {
 				if !IsCI() {
-					newSpinner, cmd := (*r)[i].Spinner.Update(msg)
-					(*r)[i].Spinner = &newSpinner
+					newSpinner, cmd := (m.Runners)[i].Spinner.Update(msg)
+					(m.Runners)[i].Spinner = &newSpinner
 					cmds = append(cmds, cmd)
 				}
 			}
 
-			for j := range (*r)[i].Children {
-				if (*r)[i].Children[j].State == Running || (*r)[i].Children[j].State == NotStarted {
+			for j := range (m.Runners)[i].Children {
+				if (m.Runners)[i].Children[j].State == Running || (m.Runners)[i].Children[j].State == NotStarted {
 					if !IsCI() {
-						newSpinner, cmd := (*r)[i].Children[j].Spinner.Update(msg)
-						(*r)[i].Children[j].Spinner = &newSpinner
+						newSpinner, cmd := (m.Runners)[i].Children[j].Spinner.Update(msg)
+						(m.Runners)[i].Children[j].Spinner = &newSpinner
 						cmds = append(cmds, cmd)
 					}
 				}
 			}
 
-			if (*r)[i].State == Failed {
-				return r, tea.Quit
+			if (m.Runners)[i].State == Failed {
+				return m, tea.Quit
 			}
 
-			if (*r)[i].State != Completed && (*r)[i].State != Failed {
+			if (m.Runners)[i].State != Completed && (m.Runners)[i].State != Failed {
 				allDone = false
 			}
 		}
 
 		if allDone {
-			return r, tea.Quit
+			return m, tea.Quit
 		}
 
-		return r, tea.Batch(cmds...)
+		return m, tea.Batch(cmds...)
 	}
 
-	return r, nil
+	return m, nil
 }
 
-func (r *Runners) checkTasksState() (allDone, anyFailed bool) {
+func (m *Model) SetShutdown(err error) {
+	m.Shutdown = true
+	m.ShutdownError = err
+}
+
+func (m *Model) checkTasksState() (allDone, anyFailed bool) {
 	allDone = true
-	for _, runner := range *r {
+	for _, runner := range m.Runners {
 		if runner.State != Completed && runner.State != Failed {
 			allDone = false
 		}
@@ -80,17 +93,18 @@ func (r *Runners) checkTasksState() (allDone, anyFailed bool) {
 	return
 }
 
-func (r *Runners) View() string {
+func (m *Model) View() string {
 	var view string
 
 	// check if CI is set, if it is then don't return the view until all tasks are completed or one has failed
 	if IsCI() {
-		allDone, _ := r.checkTasksState()
-		if !allDone {
+		allDone, anyFailed := m.checkTasksState()
+		if !allDone && !anyFailed {
 			return ""
 		}
 	}
-	for _, runner := range *r {
+
+	for _, runner := range m.Runners {
 		status := ""
 		switch runner.State {
 		case NotStarted:
