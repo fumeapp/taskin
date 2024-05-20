@@ -57,7 +57,7 @@ type ansiEscapeCodeFilter struct {
 
 func (f *ansiEscapeCodeFilter) Write(p []byte) (n int, err error) {
 	// Corrected regular expression to match ANSI escape codes
-	re := regexp.MustCompile(`\x1b\[[0-?]*[ -/]*[@-~]`)
+	re := regexp.MustCompile(`\x1b\[[0-?]*[ -/]*[@-~] *`)
 	// Remove the escape codes from the input
 	p = re.ReplaceAll(p, []byte{})
 	// Write the filtered input to the original writer
