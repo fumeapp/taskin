@@ -26,7 +26,7 @@ func main() {
 					t.Title = fmt.Sprintf("Task 2: [%d/3] seconds have passed", i+1)
 					time.Sleep(500 * time.Millisecond)
 				}
-				return fmt.Errorf("task 2 failed")
+				return nil
 			},
 		},
 	}, taskin.Defaults)
