@@ -52,7 +52,7 @@ func (task *Task) Progress(current, total int) {
 func (r *Runners) Run() error {
 	m := &Model{Runners: *r, Shutdown: false, ShutdownError: nil}
 	if IsCI() {
-		program = tea.NewProgram(m, tea.WithoutSignals(), tea.WithoutSignalHandler())
+		program = tea.NewProgram(m, tea.WithInput(nil), tea.WithoutSignals(), tea.WithoutSignalHandler())
 	} else {
 		program = tea.NewProgram(m, tea.WithInput(nil))
 	}
