@@ -112,10 +112,18 @@ func (m *Model) View() string {
 		status := ""
 		switch runner.State {
 		case NotStarted:
-			status = lipgloss.NewStyle().Foreground(runner.Config.Colors.Pending).Render(runner.Config.Chars.NotStarted) + " " + runner.Task.Title // Gray bullet
+			if IsCI() {
+				status = runner.Config.Chars.NotStarted + " " + runner.Task.Title
+			} else {
+				status = lipgloss.NewStyle().Foreground(runner.Config.Colors.Pending).Render(runner.Config.Chars.NotStarted) + " " + runner.Task.Title // Gray bullet
+			}
 		case Running:
 			if len(runner.Children) > 0 {
-				status = lipgloss.NewStyle().Foreground(runner.Config.Colors.ParentStarted).Render(runner.Config.Chars.ParentStarted) + " " + runner.Task.Title
+				if IsCI() {
+					status = runner.Config.Chars.ParentStarted + " " + runner.Task.Title
+				} else {
+					status = lipgloss.NewStyle().Foreground(runner.Config.Colors.ParentStarted).Render(runner.Config.Chars.ParentStarted) + " " + runner.Task.Title
+				}
 			} else {
 				if runner.Task.ShowProgress.Total != 0 {
 					percent := float64(runner.Task.ShowProgress.Current) / float64(runner.Task.ShowProgress.Total)
