@@ -7,6 +7,10 @@ import (
 )
 
 func (m *Model) Init() tea.Cmd {
+
+	if IsCI() {
+	}
+
 	var cmds []tea.Cmd
 	for i := range m.Runners {
 		if (m.Runners)[i].Spinner != nil {
@@ -129,9 +133,18 @@ func (m *Model) View() string {
 				}
 			}
 		case Completed:
-			status = lipgloss.NewStyle().Foreground(runner.Config.Colors.Success).Render(runner.Config.Chars.Success) + " " + runner.Task.Title // Green checkmark
+			if IsCI() {
+				status = runner.Config.Chars.Success + " " + runner.Task.Title
+			} else {
+				status = lipgloss.NewStyle().Foreground(runner.Config.Colors.Success).Render(runner.Config.Chars.Success) + " " + runner.Task.Title // Green checkmark
+			}
 		case Failed:
-			status = lipgloss.NewStyle().Foreground(runner.Config.Colors.Failure).Render(runner.Config.Chars.Failure) + " " + runner.Task.Title // Red 'x'
+			if IsCI() {
+				status = runner.Config.Chars.Failure + " " + runner.Task.Title
+			} else {
+				status = lipgloss.NewStyle().Foreground(runner.Config.Colors.Failure).Render(runner.Config.Chars.Failure) + " " + runner.Task.Title // Red 'x'
+
+			}
 		}
 		view += lipgloss.NewStyle().Render(status) + "\n"
 
@@ -139,7 +152,11 @@ func (m *Model) View() string {
 			status = ""
 			switch child.State {
 			case NotStarted:
-				status = lipgloss.NewStyle().Foreground(child.Config.Colors.Pending).Render(runner.Config.Chars.NotStarted) + " " + child.Task.Title // Gray bullet
+				if IsCI() {
+					status = runner.Config.Chars.NotStarted + " " + child.Task.Title
+				} else {
+					status = lipgloss.NewStyle().Foreground(child.Config.Colors.Pending).Render(runner.Config.Chars.NotStarted) + " " + child.Task.Title // Gray bullet
+				}
 			case Running:
 				if child.Task.ShowProgress.Total != 0 {
 					percent := float64(child.Task.ShowProgress.Current) / float64(child.Task.ShowProgress.Total)
@@ -156,11 +173,23 @@ func (m *Model) View() string {
 					}
 				}
 			case Completed:
-				status = lipgloss.NewStyle().Foreground(child.Config.Colors.Success).Render("✔") + " " + child.Task.Title // Green checkmark
+				if IsCI() {
+					status = runner.Config.Chars.Success + " " + child.Task.Title
+				} else {
+					status = lipgloss.NewStyle().Foreground(child.Config.Colors.Success).Render(runner.Config.Chars.Success) + " " + child.Task.Title // Green checkmark
+				}
 			case Failed:
-				status = lipgloss.NewStyle().Foreground(child.Config.Colors.Failure).Render("✘") + " " + child.Task.Title // Red 'x'
+				if IsCI() {
+					status = runner.Config.Chars.Failure + " " + child.Task.Title
+				} else {
+					status = lipgloss.NewStyle().Foreground(child.Config.Colors.Failure).Render(runner.Config.Chars.Failure) + " " + child.Task.Title // Red 'x'
+				}
 			}
-			view += "  " + lipgloss.NewStyle().Render(status) + "\n"
+			if IsCI() {
+				view += "  " + status + "\n"
+			} else {
+				view += "  " + lipgloss.NewStyle().Render(status) + "\n"
+			}
 		}
 	}
 	return view
