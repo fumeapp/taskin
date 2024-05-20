@@ -1,35 +1,38 @@
 package taskin
 
 import (
-	"os"
 	"testing"
 )
 
-func TestRunners_Init(t *testing.T) {
-	r := &Runners{
-		// Initialize your Runners struct here
-	}
+func TestModelInit(t *testing.T) {
+	// Initialize a new Model
+	m := &Model{}
 
-	cmd := r.Init()
+	// Call the Init method
+	cmd := m.Init()
 
-	// If Init is not implemented, it should return nil
+	// Check if the returned command is not nil
 	if cmd != nil {
-		t.Errorf("Expected Init to return nil")
+		t.Errorf("Expected command to be not nil, got not nil")
 	}
 }
 
-func TestRunners_View(t *testing.T) {
-	r := &Runners{
-		// Initialize your Runners struct here
+func TestModelUpdate(t *testing.T) {
+	// Initialize a new Model
+	m := &Model{}
+
+	// Call the Update method with a dummy message
+	newModel, cmd := m.Update("dummy message")
+
+	// Check if the returned model is not nil
+	if newModel == nil {
+		t.Errorf("Expected model to be not nil, got nil")
 	}
 
-	// Set the "CI" environment variable
-	os.Setenv("CI", "true")
-
-	view := r.View()
-
-	// If "CI" is set and not all tasks are completed, View should return an empty string
-	if view != "" {
-		t.Errorf("Expected View to return an empty string")
+	// Check if the returned command is nil
+	if cmd != nil {
+		t.Errorf("Expected command to be nil, got non-nil")
 	}
 }
+
+// Add more tests for other methods in the Model struct

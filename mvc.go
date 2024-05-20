@@ -8,9 +8,6 @@ import (
 
 func (m *Model) Init() tea.Cmd {
 
-	if IsCI() {
-	}
-
 	var cmds []tea.Cmd
 	for i := range m.Runners {
 		if (m.Runners)[i].Spinner != nil {
