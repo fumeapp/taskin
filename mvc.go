@@ -112,18 +112,10 @@ func (m *Model) View() string {
 		status := ""
 		switch runner.State {
 		case NotStarted:
-			if IsCI() {
-				status = runner.Config.Chars.NotStarted + " " + runner.Task.Title
-			} else {
-				status = lipgloss.NewStyle().Foreground(runner.Config.Colors.Pending).Render(runner.Config.Chars.NotStarted) + " " + runner.Task.Title // Gray bullet
-			}
+			status = Color(runner.Config.Colors.Pending, runner.Config.Chars.NotStarted) + " " + runner.Task.Title // Gray bullet
 		case Running:
 			if len(runner.Children) > 0 {
-				if IsCI() {
-					status = runner.Config.Chars.ParentStarted + " " + runner.Task.Title
-				} else {
-					status = lipgloss.NewStyle().Foreground(runner.Config.Colors.ParentStarted).Render(runner.Config.Chars.ParentStarted) + " " + runner.Task.Title
-				}
+				status = Color(runner.Config.Colors.ParentStarted, runner.Config.Chars.ParentStarted) + " " + runner.Task.Title
 			} else {
 				if runner.Task.ShowProgress.Total != 0 {
 					percent := float64(runner.Task.ShowProgress.Current) / float64(runner.Task.ShowProgress.Total)
@@ -141,18 +133,9 @@ func (m *Model) View() string {
 				}
 			}
 		case Completed:
-			if IsCI() {
-				status = runner.Config.Chars.Success + " " + runner.Task.Title
-			} else {
-				status = lipgloss.NewStyle().Foreground(runner.Config.Colors.Success).Render(runner.Config.Chars.Success) + " " + runner.Task.Title // Green checkmark
-			}
+			status = Color(runner.Config.Colors.Success, runner.Config.Chars.Success) + " " + runner.Task.Title // Green checkmark
 		case Failed:
-			if IsCI() {
-				status = runner.Config.Chars.Failure + " " + runner.Task.Title
-			} else {
-				status = lipgloss.NewStyle().Foreground(runner.Config.Colors.Failure).Render(runner.Config.Chars.Failure) + " " + runner.Task.Title // Red 'x'
-
-			}
+			status = Color(runner.Config.Colors.Failure, runner.Config.Chars.Failure) + " " + runner.Task.Title // Red 'x'
 		}
 		view += lipgloss.NewStyle().Render(status) + "\n"
 
@@ -160,11 +143,7 @@ func (m *Model) View() string {
 			status = ""
 			switch child.State {
 			case NotStarted:
-				if IsCI() {
-					status = runner.Config.Chars.NotStarted + " " + child.Task.Title
-				} else {
-					status = lipgloss.NewStyle().Foreground(child.Config.Colors.Pending).Render(runner.Config.Chars.NotStarted) + " " + child.Task.Title // Gray bullet
-				}
+				status = Color(child.Config.Colors.Pending, runner.Config.Chars.NotStarted) + " " + child.Task.Title // Gray bullet
 			case Running:
 				if child.Task.ShowProgress.Total != 0 {
 					percent := float64(child.Task.ShowProgress.Current) / float64(child.Task.ShowProgress.Total)
@@ -181,17 +160,9 @@ func (m *Model) View() string {
 					}
 				}
 			case Completed:
-				if IsCI() {
-					status = runner.Config.Chars.Success + " " + child.Task.Title
-				} else {
-					status = lipgloss.NewStyle().Foreground(child.Config.Colors.Success).Render(runner.Config.Chars.Success) + " " + child.Task.Title // Green checkmark
-				}
+				status = Color(child.Config.Colors.Success, runner.Config.Chars.Success) + " " + child.Task.Title // Green checkmark
 			case Failed:
-				if IsCI() {
-					status = runner.Config.Chars.Failure + " " + child.Task.Title
-				} else {
-					status = lipgloss.NewStyle().Foreground(child.Config.Colors.Failure).Render(runner.Config.Chars.Failure) + " " + child.Task.Title // Red 'x'
-				}
+				status = Color(child.Config.Colors.Failure, runner.Config.Chars.Failure) + " " + child.Task.Title // Red 'x'
 			}
 			if IsCI() {
 				view += "  " + status + "\n"
