@@ -55,10 +55,9 @@ func (r *Runners) Run() error {
 	_, err := program.Run()
 	if err != nil {
 		program.Send(TerminateWithError{Error: err})
-		os.Exit(1)
 	}
 	if m.Shutdown && m.ShutdownError != nil {
-		os.Exit(1)
+		return m.ShutdownError
 	}
 	return err
 }
