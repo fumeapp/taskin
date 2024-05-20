@@ -7,7 +7,9 @@ import (
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"io"
 	"os"
+	"regexp"
 )
 
 var program *tea.Program
@@ -49,9 +51,26 @@ func (task *Task) Progress(current, total int) {
 	}
 }
 
+type ansiEscapeCodeFilter struct {
+	writer io.Writer
+}
+
+func (f *ansiEscapeCodeFilter) Write(p []byte) (n int, err error) {
+	// Regular expression to match ANSI escape codes
+	re := regexp.MustCompile(`\x1b[^m]*m`)
+	// Remove the escape codes from the input
+	p = re.ReplaceAll(p, []byte{})
+	// Write the filtered input to the original writer
+	return f.writer.Write(p)
+}
+
 func (r *Runners) Run() error {
 	m := &Model{Runners: *r, Shutdown: false, ShutdownError: nil}
-	program = tea.NewProgram(m, tea.WithInput(nil))
+	if IsCI() {
+		program = tea.NewProgram(m, tea.WithInput(nil), tea.WithOutput(&ansiEscapeCodeFilter{writer: os.Stdout}))
+	} else {
+		program = tea.NewProgram(m, tea.WithInput(nil))
+	}
 	_, err := program.Run()
 	if err != nil {
 		program.Send(TerminateWithError{Error: err})
