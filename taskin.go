@@ -51,7 +51,11 @@ func (task *Task) Progress(current, total int) {
 
 func (r *Runners) Run() error {
 	m := &Model{Runners: *r, Shutdown: false, ShutdownError: nil}
-	program = tea.NewProgram(m, tea.WithInput(nil))
+	if IsCI() {
+		program = tea.NewProgram(m, tea.WithInput(nil), tea.WithOutput(os.Stdout))
+	} else {
+		program = tea.NewProgram(m, tea.WithInput(nil))
+	}
 	_, err := program.Run()
 	if err != nil {
 		program.Send(TerminateWithError{Error: err})
