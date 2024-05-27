@@ -95,6 +95,18 @@ func (m *Model) checkTasksState() (allDone, anyFailed bool) {
 }
 
 func (m *Model) View() string {
+
+	for _, runner := range m.Runners {
+		if runner.Task.HideView {
+			return ""
+		}
+		for _, child := range runner.Children {
+			if child.Task.HideView {
+				return ""
+			}
+		}
+	}
+
 	var view string
 
 	// check if CI is set, if it is then don't return the view until all tasks are completed or one has failed

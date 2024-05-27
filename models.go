@@ -25,6 +25,7 @@ type Task struct {
 	Bar          progress.Model
 	Config       Config
 	Tasks        Tasks
+	HideView     bool
 }
 
 type TaskProgress struct {
@@ -46,6 +47,7 @@ type Runners []Runner
 
 type Model struct {
 	Runners       Runners
+	HideView      bool
 	Shutdown      bool
 	ShutdownError error
 }

@@ -62,3 +62,27 @@ https://github.com/fumeapp/taskin/blob/3cd766c21e5eaba5edb33f38d3781d6cf814f9f9/
 
 ![Multi](/multi.gif)
 
+
+
+## Functionality in a task
+
+### Change the title
+Already demonstrated in most of the examples, you can change `t.Title` at any time
+
+### Hide a view
+Sometimes you might need to temporarily hide you task view in order to prompt a user for input.
+You can do this by toggling the task.HideView boolean.
+
+```go
+Task: func(T *taskin.Task ) error {
+	t.HideView = true
+	if err := PromptForInput(); err != nil {
+		t.HideView = false
+        return err
+    }
+    t.HideView = false
+	t.Title = "Input received"
+	return nil
+}
+
+```
