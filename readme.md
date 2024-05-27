@@ -64,7 +64,8 @@ https://github.com/fumeapp/taskin/blob/3cd766c21e5eaba5edb33f38d3781d6cf814f9f9/
 
 
 
-## Functionality in a task
+## Usage inside a task
+The `*taskin.Task` struct passeed into your task has some useful properties that you can use to customize the task view.
 
 ### Change the title
 Already demonstrated in most of the examples, you can change `t.Title` at any time
