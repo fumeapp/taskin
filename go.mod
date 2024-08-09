@@ -2,13 +2,11 @@ module github.com/fumeapp/taskin
 
 go 1.21
 
-replace github.com/imdario/mergo => github.com/imdario/mergo v0.3.16
-
 require (
+	dario.cat/mergo v1.0.0
 	github.com/charmbracelet/bubbles v0.18.0
 	github.com/charmbracelet/bubbletea v0.26.2
 	github.com/charmbracelet/lipgloss v0.10.0
-	github.com/imdario/mergo v0.0.0-00010101000000-000000000000
 )
 
 require (

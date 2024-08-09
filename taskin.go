@@ -2,14 +2,15 @@ package taskin
 
 import (
 	"fmt"
+	"io"
+	"os"
+	"regexp"
+
+	"dario.cat/mergo"
 	"github.com/charmbracelet/bubbles/progress"
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/imdario/mergo"
-	"io"
-	"os"
-	"regexp"
 )
 
 var program *tea.Program
