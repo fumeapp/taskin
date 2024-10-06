@@ -67,11 +67,14 @@ func (f *ansiEscapeCodeFilter) Write(p []byte) (n int, err error) {
 
 func (r *Runners) Run() error {
 	m := &Model{Runners: *r, Shutdown: false, ShutdownError: nil}
-	if IsCI() {
-		program = tea.NewProgram(m, tea.WithInput(nil), tea.WithOutput(&ansiEscapeCodeFilter{writer: os.Stdout}))
-	} else {
-		program = tea.NewProgram(m, tea.WithInput(nil))
-	}
+	/*
+		if IsCI() {
+			program = tea.NewProgram(m, tea.WithInput(nil), tea.WithOutput(&ansiEscapeCodeFilter{writer: os.Stdout}))
+		} else {
+			program = tea.NewProgram(m, tea.WithInput(nil))
+		}
+	*/
+	program = tea.NewProgram(m, tea.WithInput(nil))
 	_, err := program.Run()
 	if err != nil {
 		program.Send(TerminateWithError{Error: err})
@@ -84,7 +87,12 @@ func (r *Runners) Run() error {
 
 func New(tasks Tasks, cfg Config) Runners {
 
-	_ = mergo.Merge(&cfg, Defaults)
+	if IsCI() {
+		_ = mergo.Merge(&cfg, AnsiDefaults)
+	} else {
+		_ = mergo.Merge(&cfg, Defaults)
+	}
+
 	var runners Runners
 	for _, task := range tasks {
 		task.Config = cfg
