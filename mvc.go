@@ -149,6 +149,11 @@ func (m *Model) View() string {
 		view += lipgloss.NewStyle().Render(status) + "\n"
 
 		for _, child := range runner.Children {
+
+			// Only show children if parent is Running
+			if runner.State != Running {
+				continue
+			}
 			status = ""
 			switch child.State {
 			case NotStarted:

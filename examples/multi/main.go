@@ -33,33 +33,31 @@ func main() {
 					},
 				},
 
-				/*
-					{
-						Title: "Pluck the polish and marans",
-						Tasks: taskin.Tasks{
-							{
-								Title: "Pluck the polish",
-								Task: func(t *taskin.Task) error {
-									for i := 0; i < 3; i++ {
-										t.Title = fmt.Sprintf(" [%d/3] polish plucked", i+1)
-										time.Sleep(500 * time.Millisecond)
-									}
-									return nil
-								},
+				{
+					Title: "Pluck the polish and marans",
+					Tasks: taskin.Tasks{
+						{
+							Title: "Pluck the polish",
+							Task: func(t *taskin.Task) error {
+								for i := 0; i < 3; i++ {
+									t.Title = fmt.Sprintf(" [%d/3] polish plucked", i+1)
+									time.Sleep(500 * time.Millisecond)
+								}
+								return nil
 							},
-							{
-								Title: "Pluck the marans",
-								Task: func(t *taskin.Task) error {
-									for i := 0; i < 3; i++ {
-										t.Title = fmt.Sprintf(" [%d/3] marans plucked", i+1)
-										time.Sleep(500 * time.Millisecond)
-									}
-									return nil
-								},
+						},
+						{
+							Title: "Pluck the marans",
+							Task: func(t *taskin.Task) error {
+								for i := 0; i < 3; i++ {
+									t.Title = fmt.Sprintf(" [%d/3] marans plucked", i+1)
+									time.Sleep(500 * time.Millisecond)
+								}
+								return nil
 							},
 						},
 					},
-				*/
+				},
 
 				{
 					Title: "Pluck the leghorns",
