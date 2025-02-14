@@ -2,6 +2,7 @@ package taskin
 
 import (
 	"dario.cat/mergo"
+	"fmt"
 	"io"
 	"os"
 	"regexp"
@@ -89,47 +90,47 @@ func New(tasks Tasks, cfg Config) Runners {
 		runners = append(runners, NewRunner(task, cfg))
 	}
 
+	// Helper function to run a task and its children recursively
+	var runTaskAndChildren func(runner *Runner) error
+	runTaskAndChildren = func(runner *Runner) error {
+		runner.State = Running
+
+		// Run the task itself first if it has a function
+		if runner.Task.Task != nil {
+			err := runner.Task.Task(&runner.Task)
+			if err != nil {
+				runner.Task.Title = fmt.Sprintf("%s - %s", runner.Task.Title, err.Error())
+				runner.State = Failed
+				return err
+			}
+		}
+
+		// Run all children recursively
+		for i := range runner.Children {
+			err := runTaskAndChildren(&runner.Children[i])
+			if err != nil {
+				runner.State = Failed
+				return err
+			}
+		}
+
+		runner.State = Completed
+		if program != nil {
+			program.Send(spinner.TickMsg{})
+		}
+		return nil
+	}
+
 	go func() {
 		for i := range runners {
-			// Check previous failures
+			// Check for previous failures
 			for _, prev := range runners[:i] {
 				if prev.State == Failed && prev.Config.Options.ExitOnFailure {
 					return
 				}
 			}
 
-			// Helper function to execute tasks recursively
-			var executeTask func(runner *Runner) error
-			executeTask = func(runner *Runner) error {
-				runner.State = Running
-
-				// If there are children, execute them
-				if len(runner.Children) > 0 {
-					for j := range runner.Children {
-						err := executeTask(&runner.Children[j])
-						if err != nil {
-							return err
-						}
-					}
-				}
-
-				// Execute the task's own function if it exists
-				if runner.Task.Task != nil {
-					err := runner.Task.Task(&runner.Task)
-					if err != nil {
-						runner.State = Failed
-						return err
-					}
-				}
-
-				runner.State = Completed
-				if program != nil {
-					program.Send(spinner.TickMsg{})
-				}
-				return nil
-			}
-
-			err := executeTask(&runners[i])
+			err := runTaskAndChildren(&runners[i])
 			if err != nil && program != nil {
 				program.Send(TerminateWithError{Error: err})
 			}
