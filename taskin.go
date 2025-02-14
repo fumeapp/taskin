@@ -1,12 +1,12 @@
 package taskin
 
 import (
+	"dario.cat/mergo"
 	"fmt"
 	"io"
 	"os"
 	"regexp"
 
-	"dario.cat/mergo"
 	"github.com/charmbracelet/bubbles/progress"
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
@@ -83,7 +83,6 @@ func (r *Runners) Run() error {
 }
 
 func New(tasks Tasks, cfg Config) Runners {
-
 	_ = mergo.Merge(&cfg, Defaults)
 	var runners Runners
 	for _, task := range tasks {
@@ -91,60 +90,53 @@ func New(tasks Tasks, cfg Config) Runners {
 		runners = append(runners, NewRunner(task, cfg))
 	}
 
+	// Helper function to run a task and its children recursively
+	var runTaskAndChildren func(runner *Runner) error
+	runTaskAndChildren = func(runner *Runner) error {
+		runner.State = Running
+
+		// Run the task itself first if it has a function
+		if runner.Task.Task != nil {
+			err := runner.Task.Task(&runner.Task)
+			if err != nil {
+				runner.Task.Title = fmt.Sprintf("%s - %s", runner.Task.Title, err.Error())
+				runner.State = Failed
+				return err
+			}
+		}
+
+		// Run all children recursively
+		for i := range runner.Children {
+			err := runTaskAndChildren(&runner.Children[i])
+			if err != nil {
+				runner.State = Failed
+				return err
+			}
+		}
+
+		runner.State = Completed
+		if program != nil {
+			program.Send(spinner.TickMsg{})
+		}
+		return nil
+	}
+
 	go func() {
 		for i := range runners {
-
-			for _, runner := range runners[:i] {
-				if runner.State == Failed && runner.Config.Options.ExitOnFailure {
+			// Check for previous failures
+			for _, prev := range runners[:i] {
+				if prev.State == Failed && prev.Config.Options.ExitOnFailure {
 					return
 				}
 			}
 
-			runners[i].State = Running
-			err := runners[i].Task.Task(&runners[i].Task)
-			if err != nil {
-				runners[i].Task.Title = fmt.Sprintf("%s - %s", runners[i].Task.Title, err.Error())
-				runners[i].State = Failed
-				if program != nil {
-					program.Send(TerminateWithError{Error: err})
-				}
-				continue
-			}
-
-			// Run child tasks
-			for j := range runners[i].Children {
-				runners[i].Children[j].State = Running
-				err := runners[i].Children[j].Task.Task(&runners[i].Children[j].Task)
-				if err != nil {
-					runners[i].Children[j].Task.Title = fmt.Sprintf("%s - Error: %s", runners[i].Children[j].Task.Title, err.Error())
-					runners[i].Children[j].State = Failed
-					runners[i].State = Failed // Mark parent task as Failed
-					if program != nil {
-						program.Send(TerminateWithError{Error: err})
-					}
-					break
-				}
-				runners[i].Children[j].State = Completed
-			}
-
-			// Check if all child tasks are completed
-			allChildrenCompleted := true
-			for _, child := range runners[i].Children {
-				if child.State != Completed {
-					allChildrenCompleted = false
-					break
-				}
-			}
-
-			// If all child tasks are completed, mark the parent task as completed
-			if allChildrenCompleted && runners[i].State != Failed {
-				runners[i].State = Completed
-				if program != nil {
-					program.Send(spinner.TickMsg{})
-				}
+			err := runTaskAndChildren(&runners[i])
+			if err != nil && program != nil {
+				program.Send(TerminateWithError{Error: err})
 			}
 		}
 	}()
+
 	return runners
 }
 

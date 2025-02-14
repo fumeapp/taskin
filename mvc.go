@@ -94,95 +94,74 @@ func (m *Model) checkTasksState() (allDone, anyFailed bool) {
 	return
 }
 
-func (m *Model) View() string {
+// In mvc.go, update the renderTask function:
 
-	for _, runner := range m.Runners {
-		if runner.Task.HideView {
-			return ""
-		}
-		for _, child := range runner.Children {
-			if child.Task.HideView {
-				return ""
+func renderChildren(runner Runner, indent string) string {
+	var view string
+	for _, child := range runner.Children {
+		status := ""
+
+		// Only process children when parent is running or in CI mode
+		if runner.State == Running || IsCI() {
+			switch child.State {
+			case NotStarted:
+				status = Color(child.Config.Colors.Pending, child.Config.Chars.NotStarted) + " " + child.Task.Title
+			case Running:
+				if child.Task.ShowProgress.Total != 0 {
+					percent := float64(child.Task.ShowProgress.Current) / float64(child.Task.ShowProgress.Total)
+					status = child.Spinner.View() + " " + child.Task.Title + " " + child.Task.Bar.ViewAs(percent)
+				} else {
+					status = child.Spinner.View() + " " + child.Task.Title
+				}
+			case Completed:
+				status = Color(child.Config.Colors.Success, child.Config.Chars.Success) + " " + child.Task.Title
+			case Failed:
+				status = Color(child.Config.Colors.Failure, child.Config.Chars.Failure) + " " + child.Task.Title
+			}
+
+			if IsCI() {
+				view += indent + "  " + status + "\n"
+			} else {
+				view += indent + "  " + lipgloss.NewStyle().Render(status) + "\n"
+			}
+
+			// Recursively render any nested children
+			if len(child.Children) > 0 {
+				view += renderChildren(child, indent+"  ")
 			}
 		}
 	}
+	return view
+}
+
+// Update the View method to use renderChildren
+func (m *Model) View() string {
+	// ... existing view code for hiding and CI checks ...
 
 	var view string
-
-	// check if CI is set, if it is then don't return the view until all tasks are completed or one has failed
-	if IsCI() {
-		allDone, anyFailed := m.checkTasksState()
-		if !allDone && !anyFailed {
-			return ""
-		}
-	}
-
 	for _, runner := range m.Runners {
 		status := ""
 		switch runner.State {
 		case NotStarted:
-			status = Color(runner.Config.Colors.Pending, runner.Config.Chars.NotStarted) + " " + runner.Task.Title // Gray bullet
+			status = Color(runner.Config.Colors.Pending, runner.Config.Chars.NotStarted) + " " + runner.Task.Title
 		case Running:
-			if len(runner.Children) > 0 {
-				status = Color(runner.Config.Colors.ParentStarted, runner.Config.Chars.ParentStarted) + " " + runner.Task.Title
+			if runner.Task.ShowProgress.Total != 0 {
+				percent := float64(runner.Task.ShowProgress.Current) / float64(runner.Task.ShowProgress.Total)
+				status = runner.Spinner.View() + " " + runner.Task.Title + " " + runner.Task.Bar.ViewAs(percent)
 			} else {
-				if runner.Task.ShowProgress.Total != 0 {
-					percent := float64(runner.Task.ShowProgress.Current) / float64(runner.Task.ShowProgress.Total)
-					if runner.Spinner != nil {
-						status = runner.Spinner.View() + runner.Task.Title + " " + runner.Task.Bar.ViewAs(percent)
-					} else {
-						status = "⣟ " + runner.Task.Title + " " + runner.Task.Bar.ViewAs(percent)
-					}
-				} else {
-					if runner.Spinner != nil {
-						status = runner.Spinner.View() + runner.Task.Title
-					} else {
-						status = "⣟ " + runner.Task.Title
-					}
-				}
+				status = runner.Spinner.View() + " " + runner.Task.Title
 			}
 		case Completed:
-			status = Color(runner.Config.Colors.Success, runner.Config.Chars.Success) + " " + runner.Task.Title // Green checkmark
+			status = Color(runner.Config.Colors.Success, runner.Config.Chars.Success) + " " + runner.Task.Title
 		case Failed:
-			status = Color(runner.Config.Colors.Failure, runner.Config.Chars.Failure) + " " + runner.Task.Title // Red 'x'
+			status = Color(runner.Config.Colors.Failure, runner.Config.Chars.Failure) + " " + runner.Task.Title
 		}
+
 		view += lipgloss.NewStyle().Render(status) + "\n"
 
-		for _, child := range runner.Children {
-
-			// Only show children if parent is Running
-			if runner.State != Running {
-				continue
-			}
-			status = ""
-			switch child.State {
-			case NotStarted:
-				status = Color(child.Config.Colors.Pending, runner.Config.Chars.NotStarted) + " " + child.Task.Title // Gray bullet
-			case Running:
-				if child.Task.ShowProgress.Total != 0 {
-					percent := float64(child.Task.ShowProgress.Current) / float64(child.Task.ShowProgress.Total)
-					if child.Spinner == nil {
-						status = "⣟ " + child.Task.Title + " " + child.Task.Bar.ViewAs(percent)
-					} else {
-						status = child.Spinner.View() + child.Task.Title + " " + child.Task.Bar.ViewAs(percent)
-					}
-				} else {
-					if child.Spinner == nil {
-						status = "⣟ " + child.Task.Title
-					} else {
-						status = child.Spinner.View() + child.Task.Title
-					}
-				}
-			case Completed:
-				status = Color(child.Config.Colors.Success, runner.Config.Chars.Success) + " " + child.Task.Title // Green checkmark
-			case Failed:
-				status = Color(child.Config.Colors.Failure, runner.Config.Chars.Failure) + " " + child.Task.Title // Red 'x'
-			}
-			if IsCI() {
-				view += "  " + status + "\n"
-			} else {
-				view += "  " + lipgloss.NewStyle().Render(status) + "\n"
-			}
+		// Render children if they exist
+		if len(runner.Children) > 0 {
+			view += renderChildren(runner, "")
 		}
 	}
 	return view
