@@ -22,6 +22,11 @@ func (m *Model) Init() tea.Cmd {
 	return tea.Batch(cmds...)
 }
 
+func (m *Model) SetShutdown(err error) {
+	m.Shutdown = true
+	m.ShutdownError = err
+}
+
 func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
 
@@ -30,38 +35,41 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	switch msg := msg.(type) {
-
 	case TerminateWithError:
 		m.SetShutdown(msg.Error)
 		return m, tea.Quit
 
 	case spinner.TickMsg:
+		// Helper function to update spinners recursively
+		var updateSpinners func(runner *Runner) []tea.Cmd
+		updateSpinners = func(runner *Runner) []tea.Cmd {
+			var spinnerCmds []tea.Cmd
+
+			if runner.State == Running || runner.State == NotStarted {
+				if !IsCI() && runner.Spinner != nil {
+					newSpinner, cmd := runner.Spinner.Update(msg)
+					runner.Spinner = &newSpinner
+					spinnerCmds = append(spinnerCmds, cmd)
+				}
+			}
+
+			// Recursively update all children's spinners
+			for i := range runner.Children {
+				spinnerCmds = append(spinnerCmds, updateSpinners(&runner.Children[i])...)
+			}
+
+			return spinnerCmds
+		}
+
 		allDone := true
 		for i := range m.Runners {
+			cmds = append(cmds, updateSpinners(&m.Runners[i])...)
 
-			if (m.Runners)[i].State == Running || (m.Runners)[i].State == NotStarted {
-				if !IsCI() {
-					newSpinner, cmd := (m.Runners)[i].Spinner.Update(msg)
-					(m.Runners)[i].Spinner = &newSpinner
-					cmds = append(cmds, cmd)
-				}
-			}
-
-			for j := range (m.Runners)[i].Children {
-				if (m.Runners)[i].Children[j].State == Running || (m.Runners)[i].Children[j].State == NotStarted {
-					if !IsCI() {
-						newSpinner, cmd := (m.Runners)[i].Children[j].Spinner.Update(msg)
-						(m.Runners)[i].Children[j].Spinner = &newSpinner
-						cmds = append(cmds, cmd)
-					}
-				}
-			}
-
-			if (m.Runners)[i].State == Failed {
+			if m.Runners[i].State == Failed {
 				return m, tea.Quit
 			}
 
-			if (m.Runners)[i].State != Completed && (m.Runners)[i].State != Failed {
+			if m.Runners[i].State != Completed && m.Runners[i].State != Failed {
 				allDone = false
 			}
 		}
@@ -74,11 +82,6 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	return m, nil
-}
-
-func (m *Model) SetShutdown(err error) {
-	m.Shutdown = true
-	m.ShutdownError = err
 }
 
 func (m *Model) checkTasksState() (allDone, anyFailed bool) {
@@ -95,21 +98,14 @@ func (m *Model) checkTasksState() (allDone, anyFailed bool) {
 }
 
 func (m *Model) View() string {
-
+	// Check for hidden views first
 	for _, runner := range m.Runners {
 		if runner.Task.HideView {
 			return ""
 		}
-		for _, child := range runner.Children {
-			if child.Task.HideView {
-				return ""
-			}
-		}
 	}
 
-	var view string
-
-	// check if CI is set, if it is then don't return the view until all tasks are completed or one has failed
+	// Handle CI mode
 	if IsCI() {
 		allDone, anyFailed := m.checkTasksState()
 		if !allDone && !anyFailed {
@@ -117,73 +113,47 @@ func (m *Model) View() string {
 		}
 	}
 
+	var view string
 	for _, runner := range m.Runners {
-		status := ""
-		switch runner.State {
-		case NotStarted:
-			status = Color(runner.Config.Colors.Pending, runner.Config.Chars.NotStarted) + " " + runner.Task.Title // Gray bullet
-		case Running:
-			if len(runner.Children) > 0 {
-				status = Color(runner.Config.Colors.ParentStarted, runner.Config.Chars.ParentStarted) + " " + runner.Task.Title
-			} else {
-				if runner.Task.ShowProgress.Total != 0 {
-					percent := float64(runner.Task.ShowProgress.Current) / float64(runner.Task.ShowProgress.Total)
-					if runner.Spinner != nil {
-						status = runner.Spinner.View() + runner.Task.Title + " " + runner.Task.Bar.ViewAs(percent)
-					} else {
-						status = "⣟ " + runner.Task.Title + " " + runner.Task.Bar.ViewAs(percent)
-					}
-				} else {
-					if runner.Spinner != nil {
-						status = runner.Spinner.View() + runner.Task.Title
-					} else {
-						status = "⣟ " + runner.Task.Title
-					}
-				}
-			}
-		case Completed:
-			status = Color(runner.Config.Colors.Success, runner.Config.Chars.Success) + " " + runner.Task.Title // Green checkmark
-		case Failed:
-			status = Color(runner.Config.Colors.Failure, runner.Config.Chars.Failure) + " " + runner.Task.Title // Red 'x'
+		view += renderTask(runner, "")
+	}
+	return view
+}
+
+func renderTask(runner Runner, indent string) string {
+	var view string
+	status := ""
+
+	switch runner.State {
+	case NotStarted:
+		status = Color(runner.Config.Colors.Pending, runner.Config.Chars.NotStarted) + " " + runner.Task.Title
+	case Running:
+		if len(runner.Children) > 0 {
+			status = Color(runner.Config.Colors.ParentStarted, runner.Config.Chars.ParentStarted) + " " + runner.Task.Title
+		} else if runner.Task.ShowProgress.Total != 0 {
+			percent := float64(runner.Task.ShowProgress.Current) / float64(runner.Task.ShowProgress.Total)
+			status = runner.Spinner.View() + runner.Task.Title + " " + runner.Task.Bar.ViewAs(percent)
+		} else if runner.Spinner != nil {
+			status = runner.Spinner.View() + runner.Task.Title
 		}
-		view += lipgloss.NewStyle().Render(status) + "\n"
+	case Completed:
+		status = Color(runner.Config.Colors.Success, runner.Config.Chars.Success) + " " + runner.Task.Title
+	case Failed:
+		status = Color(runner.Config.Colors.Failure, runner.Config.Chars.Failure) + " " + runner.Task.Title
+	}
 
+	if IsCI() {
+		view = indent + status + "\n"
+	} else {
+		view = indent + lipgloss.NewStyle().Render(status) + "\n"
+	}
+
+	// Recursively render children
+	if len(runner.Children) > 0 && (runner.State == Running || IsCI()) {
 		for _, child := range runner.Children {
-
-			// Only show children if parent is Running
-			if runner.State != Running {
-				continue
-			}
-			status = ""
-			switch child.State {
-			case NotStarted:
-				status = Color(child.Config.Colors.Pending, runner.Config.Chars.NotStarted) + " " + child.Task.Title // Gray bullet
-			case Running:
-				if child.Task.ShowProgress.Total != 0 {
-					percent := float64(child.Task.ShowProgress.Current) / float64(child.Task.ShowProgress.Total)
-					if child.Spinner == nil {
-						status = "⣟ " + child.Task.Title + " " + child.Task.Bar.ViewAs(percent)
-					} else {
-						status = child.Spinner.View() + child.Task.Title + " " + child.Task.Bar.ViewAs(percent)
-					}
-				} else {
-					if child.Spinner == nil {
-						status = "⣟ " + child.Task.Title
-					} else {
-						status = child.Spinner.View() + child.Task.Title
-					}
-				}
-			case Completed:
-				status = Color(child.Config.Colors.Success, runner.Config.Chars.Success) + " " + child.Task.Title // Green checkmark
-			case Failed:
-				status = Color(child.Config.Colors.Failure, runner.Config.Chars.Failure) + " " + child.Task.Title // Red 'x'
-			}
-			if IsCI() {
-				view += "  " + status + "\n"
-			} else {
-				view += "  " + lipgloss.NewStyle().Render(status) + "\n"
-			}
+			view += renderTask(child, indent+"  ")
 		}
 	}
+
 	return view
 }

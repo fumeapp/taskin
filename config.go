@@ -51,9 +51,9 @@ var Defaults = Config{
 		ParentStarted: lipgloss.Color("214"),
 	},
 	Chars: ConfigChars{
-		ParentStarted: "»",
-		NotStarted:    "•",
+		NotStarted:    "○", // Changed from "•" to "○"
 		Success:       "✔",
-		Failure:       "✘",
+		Failure:       "✗",
+		ParentStarted: "»",
 	},
 }

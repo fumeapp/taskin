@@ -1,12 +1,12 @@
 package taskin
 
 import (
+	"dario.cat/mergo"
 	"fmt"
 	"io"
 	"os"
 	"regexp"
 
-	"dario.cat/mergo"
 	"github.com/charmbracelet/bubbles/progress"
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
@@ -23,6 +23,10 @@ func NewRunner(task Task, cfg Config) Runner {
 		spinnerModel := spinner.New(spinner.WithSpinner(cfg.Spinner))           // Initialize with a spinner model
 		spinnerModel.Style = lipgloss.NewStyle().Foreground(cfg.Colors.Spinner) // Styling spinner
 		spinr = &spinnerModel
+
+		if task.ShowProgress.Total != 0 {
+			task.Bar = progress.New(cfg.ProgressOptions...)
+		}
 	}
 
 	children := make(Runners, len(task.Tasks))
@@ -67,23 +71,26 @@ func (f *ansiEscapeCodeFilter) Write(p []byte) (n int, err error) {
 
 func (r *Runners) Run() error {
 	m := &Model{Runners: *r, Shutdown: false, ShutdownError: nil}
+
+	var out io.Writer = os.Stdout
 	if IsCI() {
-		program = tea.NewProgram(m, tea.WithInput(nil), tea.WithOutput(&ansiEscapeCodeFilter{writer: os.Stdout}))
-	} else {
-		program = tea.NewProgram(m, tea.WithInput(nil))
+		out = &ansiEscapeCodeFilter{writer: out}
 	}
+
+	program = tea.NewProgram(m, tea.WithInput(nil), tea.WithOutput(out))
 	_, err := program.Run()
 	if err != nil {
-		program.Send(TerminateWithError{Error: err})
+		return fmt.Errorf("program run error: %w", err)
 	}
+
 	if m.Shutdown && m.ShutdownError != nil {
-		return m.ShutdownError
+		return fmt.Errorf("shutdown error: %w", m.ShutdownError)
 	}
-	return err
+
+	return nil
 }
 
 func New(tasks Tasks, cfg Config) Runners {
-
 	_ = mergo.Merge(&cfg, Defaults)
 	var runners Runners
 	for _, task := range tasks {
@@ -91,63 +98,59 @@ func New(tasks Tasks, cfg Config) Runners {
 		runners = append(runners, NewRunner(task, cfg))
 	}
 
+	// Helper function to run a task and its children recursively
+	var runTaskAndChildren func(runner *Runner) error
+	runTaskAndChildren = func(runner *Runner) error {
+		runner.State = Running
+
+		// Run the task itself first if it has a function
+		if runner.Task.Task != nil {
+			err := runner.Task.Task(&runner.Task)
+			if err != nil {
+				runner.Task.Title = fmt.Sprintf("%s - %s", runner.Task.Title, err.Error())
+				runner.State = Failed
+				return err
+			}
+		}
+
+		// Run all children recursively
+		for i := range runner.Children {
+			err := runTaskAndChildren(&runner.Children[i])
+			if err != nil {
+				runner.State = Failed
+				return err
+			}
+		}
+
+		runner.State = Completed
+		if program != nil {
+			program.Send(spinner.TickMsg{})
+		}
+		return nil
+	}
+
 	go func() {
 		for i := range runners {
-
-			for _, runner := range runners[:i] {
-				if runner.State == Failed && runner.Config.Options.ExitOnFailure {
+			// Check for previous failures
+			for _, prev := range runners[:i] {
+				if prev.State == Failed && prev.Config.Options.ExitOnFailure {
 					return
 				}
 			}
 
-			runners[i].State = Running
-			err := runners[i].Task.Task(&runners[i].Task)
-			if err != nil {
-				runners[i].Task.Title = fmt.Sprintf("%s - %s", runners[i].Task.Title, err.Error())
-				runners[i].State = Failed
-				if program != nil {
-					program.Send(TerminateWithError{Error: err})
-				}
-				continue
-			}
-
-			// Run child tasks
-			for j := range runners[i].Children {
-				runners[i].Children[j].State = Running
-				err := runners[i].Children[j].Task.Task(&runners[i].Children[j].Task)
-				if err != nil {
-					runners[i].Children[j].Task.Title = fmt.Sprintf("%s - Error: %s", runners[i].Children[j].Task.Title, err.Error())
-					runners[i].Children[j].State = Failed
-					runners[i].State = Failed // Mark parent task as Failed
-					if program != nil {
-						program.Send(TerminateWithError{Error: err})
-					}
-					break
-				}
-				runners[i].Children[j].State = Completed
-			}
-
-			// Check if all child tasks are completed
-			allChildrenCompleted := true
-			for _, child := range runners[i].Children {
-				if child.State != Completed {
-					allChildrenCompleted = false
-					break
-				}
-			}
-
-			// If all child tasks are completed, mark the parent task as completed
-			if allChildrenCompleted && runners[i].State != Failed {
-				runners[i].State = Completed
-				if program != nil {
-					program.Send(spinner.TickMsg{})
-				}
+			err := runTaskAndChildren(&runners[i])
+			if err != nil && program != nil {
+				program.Send(TerminateWithError{Error: err})
 			}
 		}
 	}()
+
 	return runners
 }
 
 func IsCI() bool {
-	return os.Getenv("CI") != ""
+	return os.Getenv("CI") != "" ||
+		os.Getenv("CONTINUOUS_INTEGRATION") != "" ||
+		os.Getenv("BUILD_NUMBER") != "" ||
+		os.Getenv("GITHUB_ACTIONS") != ""
 }
