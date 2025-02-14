@@ -6,7 +6,7 @@
 <p align="center"><strong>📋 Add user-friendly tasks to your terminal </strong></p>
 <br />
 
-![Multi](/multi.mp4)
+![Multi](/multi.gif)
 
 
 [![Release](https://img.shields.io/github/v/release/fumeapp/taskin)](https://github.com/fumeapp/taskin/releases)
