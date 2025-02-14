@@ -94,75 +94,63 @@ func (m *Model) checkTasksState() (allDone, anyFailed bool) {
 	return
 }
 
-// In mvc.go, update the renderTask function:
-
-func renderChildren(runner Runner, indent string) string {
+func renderTask(runner Runner, indent string) string {
 	var view string
-	for _, child := range runner.Children {
-		status := ""
+	status := ""
 
-		// Only process children when parent is running or in CI mode
-		if runner.State == Running || IsCI() {
-			switch child.State {
-			case NotStarted:
-				status = Color(child.Config.Colors.Pending, child.Config.Chars.NotStarted) + " " + child.Task.Title
-			case Running:
-				if child.Task.ShowProgress.Total != 0 {
-					percent := float64(child.Task.ShowProgress.Current) / float64(child.Task.ShowProgress.Total)
-					status = child.Spinner.View() + " " + child.Task.Title + " " + child.Task.Bar.ViewAs(percent)
-				} else {
-					status = child.Spinner.View() + " " + child.Task.Title
-				}
-			case Completed:
-				status = Color(child.Config.Colors.Success, child.Config.Chars.Success) + " " + child.Task.Title
-			case Failed:
-				status = Color(child.Config.Colors.Failure, child.Config.Chars.Failure) + " " + child.Task.Title
-			}
+	switch runner.State {
+	case NotStarted:
+		status = Color(runner.Config.Colors.Pending, runner.Config.Chars.NotStarted) + " " + runner.Task.Title
+	case Running:
+		if len(runner.Children) > 0 {
+			status = Color(runner.Config.Colors.ParentStarted, runner.Config.Chars.ParentStarted) + " " + runner.Task.Title
+		} else if runner.Task.ShowProgress.Total != 0 {
+			percent := float64(runner.Task.ShowProgress.Current) / float64(runner.Task.ShowProgress.Total)
+			status = runner.Spinner.View() + " " + runner.Task.Title + " " + runner.Task.Bar.ViewAs(percent)
+		} else {
+			status = runner.Spinner.View() + " " + runner.Task.Title
+		}
+	case Completed:
+		status = Color(runner.Config.Colors.Success, runner.Config.Chars.Success) + " " + runner.Task.Title
+	case Failed:
+		status = Color(runner.Config.Colors.Failure, runner.Config.Chars.Failure) + " " + runner.Task.Title
+	}
 
-			if IsCI() {
-				view += indent + "  " + status + "\n"
-			} else {
-				view += indent + "  " + lipgloss.NewStyle().Render(status) + "\n"
-			}
+	if IsCI() {
+		view += indent + status + "\n"
+	} else {
+		view += indent + lipgloss.NewStyle().Render(status) + "\n"
+	}
 
-			// Recursively render any nested children
-			if len(child.Children) > 0 {
-				view += renderChildren(child, indent+"  ")
-			}
+	// Recursively render children if parent is running
+	if len(runner.Children) > 0 && (runner.State == Running || IsCI()) {
+		for _, child := range runner.Children {
+			view += renderTask(child, indent+"  ")
 		}
 	}
+
 	return view
 }
 
-// Update the View method to use renderChildren
 func (m *Model) View() string {
-	// ... existing view code for hiding and CI checks ...
+	// Check for hidden views first
+	for _, runner := range m.Runners {
+		if runner.Task.HideView {
+			return ""
+		}
+	}
+
+	// Handle CI mode
+	if IsCI() {
+		allDone, anyFailed := m.checkTasksState()
+		if !allDone && !anyFailed {
+			return ""
+		}
+	}
 
 	var view string
 	for _, runner := range m.Runners {
-		status := ""
-		switch runner.State {
-		case NotStarted:
-			status = Color(runner.Config.Colors.Pending, runner.Config.Chars.NotStarted) + " " + runner.Task.Title
-		case Running:
-			if runner.Task.ShowProgress.Total != 0 {
-				percent := float64(runner.Task.ShowProgress.Current) / float64(runner.Task.ShowProgress.Total)
-				status = runner.Spinner.View() + " " + runner.Task.Title + " " + runner.Task.Bar.ViewAs(percent)
-			} else {
-				status = runner.Spinner.View() + " " + runner.Task.Title
-			}
-		case Completed:
-			status = Color(runner.Config.Colors.Success, runner.Config.Chars.Success) + " " + runner.Task.Title
-		case Failed:
-			status = Color(runner.Config.Colors.Failure, runner.Config.Chars.Failure) + " " + runner.Task.Title
-		}
-
-		view += lipgloss.NewStyle().Render(status) + "\n"
-
-		// Render children if they exist
-		if len(runner.Children) > 0 {
-			view += renderChildren(runner, "")
-		}
+		view += renderTask(runner, "")
 	}
 	return view
 }
