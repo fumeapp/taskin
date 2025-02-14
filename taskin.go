@@ -143,3 +143,46 @@ func New(tasks Tasks, cfg Config) Runners {
 func IsCI() bool {
 	return os.Getenv("CI") != ""
 }
+
+// In taskin.go, modify the renderTask function:
+
+func renderTask(runner Runner, indent string) string {
+	var view string
+	status := ""
+
+	switch runner.State {
+	case NotStarted:
+		status = Color(runner.Config.Colors.Pending, runner.Config.Chars.NotStarted) + " " + runner.Task.Title
+	case Running:
+		if len(runner.Children) > 0 {
+			status = Color(runner.Config.Colors.ParentStarted, runner.Config.Chars.ParentStarted) + " " + runner.Task.Title
+		} else {
+			// Unified progress handling for all task levels
+			if runner.Task.ShowProgress.Total != 0 && runner.Task.Bar.IsAnimating() {
+				percent := float64(runner.Task.ShowProgress.Current) / float64(runner.Task.ShowProgress.Total)
+				status = runner.Spinner.View() + " " + runner.Task.Title + " " + runner.Task.Bar.ViewAs(percent)
+			} else if runner.Spinner != nil {
+				status = runner.Spinner.View() + " " + runner.Task.Title
+			}
+		}
+	case Completed:
+		status = Color(runner.Config.Colors.Success, runner.Config.Chars.Success) + " " + runner.Task.Title
+	case Failed:
+		status = Color(runner.Config.Colors.Failure, runner.Config.Chars.Failure) + " " + runner.Task.Title
+	}
+
+	if IsCI() {
+		view += indent + status + "\n"
+	} else {
+		view += indent + lipgloss.NewStyle().Render(status) + "\n"
+	}
+
+	// Recursively render children
+	if len(runner.Children) > 0 && (runner.State == Running || IsCI()) {
+		for _, child := range runner.Children {
+			view += renderTask(child, indent+"  ")
+		}
+	}
+
+	return view
+}

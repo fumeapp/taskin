@@ -34,10 +34,10 @@ func main() {
 				},
 
 				{
-					Title: "Pluck the polish and marans",
+					Title: "Pluck the Polish and Marans",
 					Tasks: taskin.Tasks{
 						{
-							Title: "Pluck the polish",
+							Title: "Pluck the Polish",
 							Task: func(t *taskin.Task) error {
 								for i := 0; i < 3; i++ {
 									t.Title = fmt.Sprintf(" [%d/3] polish plucked", i+1)
@@ -47,7 +47,7 @@ func main() {
 							},
 						},
 						{
-							Title: "Pluck the marans",
+							Title: "Pluck the Marans",
 							Task: func(t *taskin.Task) error {
 								for i := 0; i < 3; i++ {
 									t.Title = fmt.Sprintf(" [%d/3] marans plucked", i+1)
