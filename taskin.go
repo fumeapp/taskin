@@ -23,6 +23,10 @@ func NewRunner(task Task, cfg Config) Runner {
 		spinnerModel := spinner.New(spinner.WithSpinner(cfg.Spinner))           // Initialize with a spinner model
 		spinnerModel.Style = lipgloss.NewStyle().Foreground(cfg.Colors.Spinner) // Styling spinner
 		spinr = &spinnerModel
+
+		if task.ShowProgress.Total != 0 {
+			task.Bar = progress.New(cfg.ProgressOptions...)
+		}
 	}
 
 	children := make(Runners, len(task.Tasks))
@@ -67,19 +71,23 @@ func (f *ansiEscapeCodeFilter) Write(p []byte) (n int, err error) {
 
 func (r *Runners) Run() error {
 	m := &Model{Runners: *r, Shutdown: false, ShutdownError: nil}
+
+	var out io.Writer = os.Stdout
 	if IsCI() {
-		program = tea.NewProgram(m, tea.WithInput(nil), tea.WithOutput(&ansiEscapeCodeFilter{writer: os.Stdout}))
-	} else {
-		program = tea.NewProgram(m, tea.WithInput(nil))
+		out = &ansiEscapeCodeFilter{writer: out}
 	}
+
+	program = tea.NewProgram(m, tea.WithInput(nil), tea.WithOutput(out))
 	_, err := program.Run()
 	if err != nil {
-		program.Send(TerminateWithError{Error: err})
+		return fmt.Errorf("program run error: %w", err)
 	}
+
 	if m.Shutdown && m.ShutdownError != nil {
-		return m.ShutdownError
+		return fmt.Errorf("shutdown error: %w", m.ShutdownError)
 	}
-	return err
+
+	return nil
 }
 
 func New(tasks Tasks, cfg Config) Runners {
@@ -141,48 +149,8 @@ func New(tasks Tasks, cfg Config) Runners {
 }
 
 func IsCI() bool {
-	return os.Getenv("CI") != ""
-}
-
-// In taskin.go, modify the renderTask function:
-
-func renderTask(runner Runner, indent string) string {
-	var view string
-	status := ""
-
-	switch runner.State {
-	case NotStarted:
-		status = Color(runner.Config.Colors.Pending, runner.Config.Chars.NotStarted) + " " + runner.Task.Title
-	case Running:
-		if len(runner.Children) > 0 {
-			status = Color(runner.Config.Colors.ParentStarted, runner.Config.Chars.ParentStarted) + " " + runner.Task.Title
-		} else {
-			// Unified progress handling for all task levels
-			if runner.Task.ShowProgress.Total != 0 && runner.Task.Bar.IsAnimating() {
-				percent := float64(runner.Task.ShowProgress.Current) / float64(runner.Task.ShowProgress.Total)
-				status = runner.Spinner.View() + " " + runner.Task.Title + " " + runner.Task.Bar.ViewAs(percent)
-			} else if runner.Spinner != nil {
-				status = runner.Spinner.View() + " " + runner.Task.Title
-			}
-		}
-	case Completed:
-		status = Color(runner.Config.Colors.Success, runner.Config.Chars.Success) + " " + runner.Task.Title
-	case Failed:
-		status = Color(runner.Config.Colors.Failure, runner.Config.Chars.Failure) + " " + runner.Task.Title
-	}
-
-	if IsCI() {
-		view += indent + status + "\n"
-	} else {
-		view += indent + lipgloss.NewStyle().Render(status) + "\n"
-	}
-
-	// Recursively render children
-	if len(runner.Children) > 0 && (runner.State == Running || IsCI()) {
-		for _, child := range runner.Children {
-			view += renderTask(child, indent+"  ")
-		}
-	}
-
-	return view
+	return os.Getenv("CI") != "" ||
+		os.Getenv("CONTINUOUS_INTEGRATION") != "" ||
+		os.Getenv("BUILD_NUMBER") != "" ||
+		os.Getenv("GITHUB_ACTIONS") != ""
 }

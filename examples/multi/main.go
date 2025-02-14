@@ -23,10 +23,10 @@ func main() {
 			Title: "Pluck the Chickens",
 			Tasks: taskin.Tasks{
 				{
-					Title: "Pluck the silkies",
+					Title: "Pluck the silkies [0/3]",
 					Task: func(t *taskin.Task) error {
 						for i := 0; i < 3; i++ {
-							t.Title = fmt.Sprintf(" [%d/3] silkies plucked", i+1)
+							t.Title = fmt.Sprintf("Pluck the silkies [%d/3]", i+1)
 							time.Sleep(500 * time.Millisecond)
 						}
 						return nil
@@ -37,20 +37,20 @@ func main() {
 					Title: "Pluck the Polish and Marans",
 					Tasks: taskin.Tasks{
 						{
-							Title: "Pluck the Polish",
+							Title: "[0/3] Pluck the Polish",
 							Task: func(t *taskin.Task) error {
 								for i := 0; i < 3; i++ {
-									t.Title = fmt.Sprintf(" [%d/3] polish plucked", i+1)
+									t.Title = fmt.Sprintf("[%d/3] Pluck the Polish", i+1)
 									time.Sleep(500 * time.Millisecond)
 								}
 								return nil
 							},
 						},
 						{
-							Title: "Pluck the Marans",
+							Title: "[0/3] Pluck the Marans",
 							Task: func(t *taskin.Task) error {
 								for i := 0; i < 3; i++ {
-									t.Title = fmt.Sprintf(" [%d/3] marans plucked", i+1)
+									t.Title = fmt.Sprintf("[%d/3] Pluck the Marans", i+1)
 									time.Sleep(500 * time.Millisecond)
 								}
 								return nil
@@ -60,10 +60,10 @@ func main() {
 				},
 
 				{
-					Title: "Pluck the leghorns",
+					Title: "[0/3] Pluck the leghorns",
 					Task: func(t *taskin.Task) error {
 						for i := 0; i < 3; i++ {
-							t.Title = fmt.Sprintf(" [%d/3] leghorns plucked", i+1)
+							t.Title = fmt.Sprintf("[%d/3] Pluck the Leghorns", i+1)
 							time.Sleep(500 * time.Millisecond)
 						}
 						return nil
