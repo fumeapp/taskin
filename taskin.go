@@ -19,7 +19,7 @@ func NewRunner(task Task, cfg Config) Runner {
 
 	var spinr *spinner.Model
 
-	if !IsCI() {
+	if !IsCI() && !cfg.DisableUI {
 		spinnerModel := spinner.New(spinner.WithSpinner(cfg.Spinner))           // Initialize with a spinner model
 		spinnerModel.Style = lipgloss.NewStyle().Foreground(cfg.Colors.Spinner) // Styling spinner
 		spinr = &spinnerModel
@@ -73,7 +73,8 @@ func (r *Runners) Run() error {
 	m := &Model{Runners: *r, Shutdown: false, ShutdownError: nil}
 
 	var out io.Writer = os.Stdout
-	if IsCI() {
+	// Check if we need to disable UI features or are in CI mode
+	if IsCI() || (len(*r) > 0 && (*r)[0].Config.DisableUI) {
 		out = &ansiEscapeCodeFilter{writer: out}
 	}
 

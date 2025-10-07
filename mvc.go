@@ -46,7 +46,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			var spinnerCmds []tea.Cmd
 
 			if runner.State == Running || runner.State == NotStarted {
-				if !IsCI() && runner.Spinner != nil {
+				if !IsCI() && !runner.Config.DisableUI && runner.Spinner != nil {
 					newSpinner, cmd := runner.Spinner.Update(msg)
 					runner.Spinner = &newSpinner
 					spinnerCmds = append(spinnerCmds, cmd)
@@ -105,8 +105,8 @@ func (m *Model) View() string {
 		}
 	}
 
-	// Handle CI mode
-	if IsCI() {
+	// Handle CI mode or UI disabled mode
+	if IsCI() || (len(m.Runners) > 0 && m.Runners[0].Config.DisableUI) {
 		allDone, anyFailed := m.checkTasksState()
 		if !allDone && !anyFailed {
 			return ""
@@ -142,14 +142,14 @@ func renderTask(runner Runner, indent string) string {
 		status = Color(runner.Config.Colors.Failure, runner.Config.Chars.Failure) + " " + runner.Task.Title
 	}
 
-	if IsCI() {
+	if IsCI() || runner.Config.DisableUI {
 		view = indent + status + "\n"
 	} else {
 		view = indent + lipgloss.NewStyle().Render(status) + "\n"
 	}
 
 	// Recursively render children
-	if len(runner.Children) > 0 && (runner.State == Running || IsCI()) {
+	if len(runner.Children) > 0 && (runner.State == Running || IsCI() || runner.Config.DisableUI) {
 		for _, child := range runner.Children {
 			view += renderTask(child, indent+"  ")
 		}

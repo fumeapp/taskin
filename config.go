@@ -7,11 +7,12 @@ import (
 )
 
 type Config struct {
-	Options         ConfigOptions
-	Spinner         spinner.Spinner
 	Colors          ConfigColors
-	ProgressOptions []progress.Option
 	Chars           ConfigChars
+	Spinner         spinner.Spinner
+	Options         ConfigOptions
+	ProgressOptions []progress.Option
+	DisableUI       bool // Disable animations and spinners
 }
 
 type ConfigOptions struct {

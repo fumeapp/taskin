@@ -56,6 +56,12 @@ https://github.com/fumeapp/taskin/blob/3cd766c21e5eaba5edb33f38d3781d6cf814f9f9/
 
 
 
+Disable UI animations and spinners
+
+https://github.com/fumeapp/taskin/blob/main/examples/disable-ui/main.go#L32-L42
+
+This is useful when you want plain text output without animations, similar to CI mode but controllable via configuration.
+
 Nest tasks inside tasks
 
 https://github.com/fumeapp/taskin/blob/3cd766c21e5eaba5edb33f38d3781d6cf814f9f9/examples/multi/main.go#L23-L34

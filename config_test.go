@@ -58,3 +58,33 @@ func TestConfig(t *testing.T) {
 		t.Errorf("Expected ExitOnFailure to be 'true', got '%v'", config.Options.ExitOnFailure)
 	}
 }
+
+func TestDisableUI(t *testing.T) {
+	tasks := Tasks{
+		{
+			Title: "Test task",
+			Task: func(task *Task) error {
+				task.Title = "Test task completed"
+				return nil
+			},
+		},
+	}
+
+	// Test with UI disabled
+	cfg := Defaults
+	cfg.DisableUI = true
+
+	runners := New(tasks, cfg)
+
+	// Verify that spinners are not initialized when UI is disabled
+	for _, runner := range runners {
+		if runner.Spinner != nil {
+			t.Error("Expected spinner to be nil when DisableUI is true")
+		}
+	}
+
+	err := runners.Run()
+	if err != nil {
+		t.Fatalf("Expected no error, got: %v", err)
+	}
+}
