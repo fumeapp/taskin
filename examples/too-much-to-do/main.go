@@ -16,7 +16,7 @@ func main() {
 	libraries := generateLibraries(20)
 	runners := NewLibraryDownloader(libraries)
 
-	runners.Run()
+	runners.Run() //nolint:errcheck // Example code
 }
 
 func generateLibraries(count int) []Library {
