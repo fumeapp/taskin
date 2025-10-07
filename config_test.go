@@ -75,7 +75,7 @@ func TestDisableUI(t *testing.T) {
 	cfg.DisableUI = true
 
 	runners := New(tasks, cfg)
-	
+
 	// Verify that spinners are not initialized when UI is disabled
 	for _, runner := range runners {
 		if runner.Spinner != nil {
