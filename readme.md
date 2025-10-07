@@ -58,7 +58,7 @@ https://github.com/fumeapp/taskin/blob/3cd766c21e5eaba5edb33f38d3781d6cf814f9f9/
 
 Disable UI animations and spinners
 
-https://github.com/fumeapp/taskin/blob/main/examples/disable-ui/main.go#L32-L42
+https://github.com/fumeapp/taskin/blob/4a1b680400f53dbb5f813ec96fca50544e12b14d/examples/disable-ui/main.go#L49-L57
 
 This is useful when you want plain text output without animations, similar to CI mode but controllable via configuration.
 
