@@ -16,7 +16,7 @@ func main() {
 			// sleep for 3 seconds then return nil
 			Task: func(t *taskin.Task) error {
 				for i := 0; i < 2; i++ {
-					t.Title = fmt.Sprintf("Task 1 - [%d/%d]", i+1, 2)
+					t.SetTitle(fmt.Sprintf("Task 1 - [%d/%d]", i+1, 2))
 					time.Sleep(1 * time.Second)
 				}
 				return nil
@@ -28,7 +28,7 @@ func main() {
 			Task: func(t *taskin.Task) error {
 				for i := 0; i < 5; i++ {
 					t.Progress(i+1, 5)
-					t.Title = fmt.Sprintf("Task 2 - [%d/%d]", i+1, 5)
+					t.SetTitle(fmt.Sprintf("Task 2 - [%d/%d]", i+1, 5))
 					time.Sleep(1 * time.Second)
 				}
 				return nil
@@ -39,7 +39,7 @@ func main() {
 			// sleep for 3 seconds then return nil
 			Task: func(t *taskin.Task) error {
 				for i := 0; i < 2; i++ {
-					t.Title = fmt.Sprintf("Task 3 - [%d/%d]", i+1, 2)
+					t.SetTitle(fmt.Sprintf("Task 3 - [%d/%d]", i+1, 2))
 					time.Sleep(1 * time.Second)
 				}
 				return nil

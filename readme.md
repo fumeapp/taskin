@@ -74,21 +74,21 @@ https://github.com/fumeapp/taskin/blob/3cd766c21e5eaba5edb33f38d3781d6cf814f9f9/
 The `*taskin.Task` struct passeed into your task has some useful properties that you can use to customize the task view.
 
 ### Change the title
-Already demonstrated in most of the examples, you can change `t.Title` at any time
+Already demonstrated in most of the examples, you can change the title with `t.SetTitle("New title")`.
 
 ### Hide a view
 Sometimes you might need to temporarily hide you task view in order to prompt a user for input.
-You can do this by toggling the task.HideView boolean.
+You can do this by calling `t.SetHideView(true)` and showing it again with `t.SetHideView(false)`.
 
 ```go
 Task: func(T *taskin.Task ) error {
-	t.HideView = true
+	t.SetHideView(true)
 	if err := PromptForInput(); err != nil {
-		t.HideView = false
+		t.SetHideView(false)
         return err
     }
-    t.HideView = false
-	t.Title = "Input received"
+    t.SetHideView(false)
+	t.SetTitle("Input received")
 	return nil
 }
 

@@ -3,11 +3,34 @@ package taskin
 import (
 	"github.com/charmbracelet/bubbles/progress"
 	"github.com/charmbracelet/bubbles/spinner"
+	tea "github.com/charmbracelet/bubbletea"
 )
 
 type TerminateWithError struct {
 	Error error
 }
+
+type taskStartedMsg struct {
+	Path []int
+}
+
+type taskUpdatedMsg struct {
+	Path []int
+	Task Task
+}
+
+type taskCompletedMsg struct {
+	Path []int
+	Task Task
+}
+
+type taskFailedMsg struct {
+	Path  []int
+	Task  Task
+	Error error
+}
+
+type taskExecutionFinishedMsg struct{}
 
 type TaskState int
 
@@ -50,4 +73,5 @@ type Model struct {
 	HideView      bool
 	Shutdown      bool
 	ShutdownError error
+	taskMessages  chan tea.Msg
 }
