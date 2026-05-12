@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"regexp"
+	"sync"
 
 	"github.com/charmbracelet/bubbles/progress"
 	"github.com/charmbracelet/bubbles/spinner"
@@ -13,7 +14,25 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-var program *tea.Program
+var (
+	programMu sync.RWMutex
+	program   *tea.Program
+)
+
+func setProgram(p *tea.Program) {
+	programMu.Lock()
+	defer programMu.Unlock()
+	program = p
+}
+
+func sendProgramMessage(msg tea.Msg) {
+	programMu.RLock()
+	p := program
+	programMu.RUnlock()
+	if p != nil {
+		p.Send(msg)
+	}
+}
 
 func NewRunner(task Task, cfg Config) Runner {
 
@@ -78,8 +97,10 @@ func (r *Runners) Run() error {
 		out = &ansiEscapeCodeFilter{writer: out}
 	}
 
-	program = tea.NewProgram(m, tea.WithInput(nil), tea.WithOutput(out))
-	_, err := program.Run()
+	p := tea.NewProgram(m, tea.WithInput(nil), tea.WithOutput(out))
+	setProgram(p)
+	_, err := p.Run()
+	setProgram(nil)
 	if err != nil {
 		return fmt.Errorf("program run error: %w", err)
 	}
@@ -124,9 +145,7 @@ func New(tasks Tasks, cfg Config) Runners {
 		}
 
 		runner.State = Completed
-		if program != nil {
-			program.Send(spinner.TickMsg{})
-		}
+		sendProgramMessage(spinner.TickMsg{})
 		return nil
 	}
 
@@ -140,8 +159,8 @@ func New(tasks Tasks, cfg Config) Runners {
 			}
 
 			err := runTaskAndChildren(&runners[i])
-			if err != nil && program != nil {
-				program.Send(TerminateWithError{Error: err})
+			if err != nil {
+				sendProgramMessage(TerminateWithError{Error: err})
 			}
 		}
 	}()
