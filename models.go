@@ -25,12 +25,9 @@ type taskCompletedMsg struct {
 }
 
 type taskFailedMsg struct {
-	Path  []int
-	Task  Task
-	Error error
+	Path []int
+	Task Task
 }
-
-type taskExecutionFinishedMsg struct{}
 
 type TaskState int
 

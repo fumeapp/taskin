@@ -20,6 +20,9 @@ func (m *Model) Init() tea.Cmd {
 		}
 	}
 	if m.taskMessages != nil {
+		if len(m.Runners) == 0 {
+			return tea.Quit
+		}
 		cmds = append(cmds, runTasksCmd(cloneRunners(m.Runners), m.taskMessages), waitForTaskMessage(m.taskMessages))
 	}
 	return tea.Batch(cmds...)
@@ -44,8 +47,6 @@ func (m *Model) SetShutdown(err error) {
 }
 
 func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	var cmds []tea.Cmd
-
 	if m.Shutdown && m.ShutdownError != nil {
 		return m, tea.Quit
 	}
@@ -53,8 +54,6 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case TerminateWithError:
 		m.SetShutdown(msg.Error)
-		return m, tea.Quit
-	case taskExecutionFinishedMsg:
 		return m, tea.Quit
 	case taskStartedMsg:
 		if runner := m.runnerAtPath(msg.Path); runner != nil {
@@ -84,6 +83,8 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, m.waitForTaskMessage()
 
 	case spinner.TickMsg:
+		var cmds []tea.Cmd
+
 		// Helper function to update spinners recursively
 		var updateSpinners func(runner *Runner) []tea.Cmd
 		updateSpinners = func(runner *Runner) []tea.Cmd {
@@ -105,16 +106,11 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return spinnerCmds
 		}
 
-		allDone := true
 		for i := range m.Runners {
 			cmds = append(cmds, updateSpinners(&m.Runners[i])...)
-
-			if m.Runners[i].State != Completed && m.Runners[i].State != Failed {
-				allDone = false
-			}
 		}
 
-		_, anyFailed := m.checkTasksState()
+		allDone, anyFailed := m.checkTasksState()
 		if allDone && !anyFailed {
 			return m, tea.Quit
 		}

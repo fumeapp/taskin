@@ -134,9 +134,7 @@ func runTasksCmd(runners Runners, messages chan<- tea.Msg) tea.Cmd {
 		go func() {
 			if err := runRunners(runners, messages); err != nil {
 				messages <- TerminateWithError{Error: err}
-				return
 			}
-			messages <- taskExecutionFinishedMsg{}
 		}()
 		return nil
 	}
@@ -161,11 +159,11 @@ func runRunners(runners Runners, messages chan<- tea.Msg) error {
 
 func runTaskAndChildren(runner *Runner, path []int, messages chan<- tea.Msg) error {
 	runner.State = Running
-	messages <- taskStartedMsg{Path: clonePath(path)}
+	messages <- taskStartedMsg{Path: path}
 
 	task := runner.Task
 	callback := taskUpdateCallback(func(updated Task) {
-		messages <- taskUpdatedMsg{Path: clonePath(path), Task: updated}
+		messages <- taskUpdatedMsg{Path: path, Task: updated}
 	})
 	taskUpdateCallbacks.Store(&task, callback)
 	var err error
@@ -178,21 +176,21 @@ func runTaskAndChildren(runner *Runner, path []int, messages chan<- tea.Msg) err
 	if err != nil {
 		runner.Task.Title = fmt.Sprintf("%s - %s", runner.Task.Title, err.Error())
 		runner.State = Failed
-		messages <- taskFailedMsg{Path: clonePath(path), Task: runner.Task, Error: err}
+		messages <- taskFailedMsg{Path: path, Task: runner.Task}
 		return err
 	}
-	messages <- taskUpdatedMsg{Path: clonePath(path), Task: runner.Task}
+	messages <- taskUpdatedMsg{Path: path, Task: runner.Task}
 
 	for i := range runner.Children {
 		if err := runTaskAndChildren(&runner.Children[i], pathWithIndex(path, i), messages); err != nil {
 			runner.State = Failed
-			messages <- taskFailedMsg{Path: clonePath(path), Task: runner.Task, Error: err}
+			messages <- taskFailedMsg{Path: path, Task: runner.Task}
 			return err
 		}
 	}
 
 	runner.State = Completed
-	messages <- taskCompletedMsg{Path: clonePath(path), Task: runner.Task}
+	messages <- taskCompletedMsg{Path: path, Task: runner.Task}
 	return nil
 }
 
@@ -235,12 +233,6 @@ func pathWithIndex(path []int, index int) []int {
 	copy(next, path)
 	next[len(path)] = index
 	return next
-}
-
-func clonePath(path []int) []int {
-	cloned := make([]int, len(path))
-	copy(cloned, path)
-	return cloned
 }
 
 func IsCI() bool {
