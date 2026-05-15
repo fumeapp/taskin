@@ -14,7 +14,7 @@ func main() {
 			Task: func(t *taskin.Task) error {
 				for i := 0; i < 5; i++ {
 					t.Progress(i+1, 5)
-					t.Title = fmt.Sprintf("Progress [%d/%d]", i+1, 5)
+					t.SetTitle(fmt.Sprintf("Progress [%d/%d]", i+1, 5))
 					time.Sleep(1 * time.Second)
 				}
 				return nil

@@ -19,7 +19,26 @@ func (m *Model) Init() tea.Cmd {
 			}
 		}
 	}
+	if m.taskMessages != nil {
+		if len(m.Runners) == 0 {
+			return tea.Quit
+		}
+		cmds = append(cmds, runTasksCmd(cloneRunners(m.Runners), m.taskMessages), waitForTaskMessage(m.taskMessages))
+	}
 	return tea.Batch(cmds...)
+}
+
+func waitForTaskMessage(messages <-chan tea.Msg) tea.Cmd {
+	return func() tea.Msg {
+		return <-messages
+	}
+}
+
+func (m *Model) waitForTaskMessage() tea.Cmd {
+	if m.taskMessages == nil {
+		return nil
+	}
+	return waitForTaskMessage(m.taskMessages)
 }
 
 func (m *Model) SetShutdown(err error) {
@@ -28,8 +47,6 @@ func (m *Model) SetShutdown(err error) {
 }
 
 func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	var cmds []tea.Cmd
-
 	if m.Shutdown && m.ShutdownError != nil {
 		return m, tea.Quit
 	}
@@ -38,9 +55,36 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case TerminateWithError:
 		m.SetShutdown(msg.Error)
 		return m, tea.Quit
+	case taskStartedMsg:
+		if runner := m.runnerAtPath(msg.Path); runner != nil {
+			runner.State = Running
+		}
+		return m, m.waitForTaskMessage()
+	case taskUpdatedMsg:
+		if runner := m.runnerAtPath(msg.Path); runner != nil {
+			runner.Task = msg.Task
+		}
+		return m, m.waitForTaskMessage()
+	case taskCompletedMsg:
+		if runner := m.runnerAtPath(msg.Path); runner != nil {
+			runner.Task = msg.Task
+			runner.State = Completed
+		}
+		allDone, anyFailed := m.checkTasksState()
+		if allDone && !anyFailed {
+			return m, tea.Quit
+		}
+		return m, m.waitForTaskMessage()
+	case taskFailedMsg:
+		if runner := m.runnerAtPath(msg.Path); runner != nil {
+			runner.Task = msg.Task
+			runner.State = Failed
+		}
+		return m, m.waitForTaskMessage()
 
 	case spinner.TickMsg:
-		// Helper function to update spinners recursively
+		var cmds []tea.Cmd
+
 		var updateSpinners func(runner *Runner) []tea.Cmd
 		updateSpinners = func(runner *Runner) []tea.Cmd {
 			var spinnerCmds []tea.Cmd
@@ -53,7 +97,6 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 			}
 
-			// Recursively update all children's spinners
 			for i := range runner.Children {
 				spinnerCmds = append(spinnerCmds, updateSpinners(&runner.Children[i])...)
 			}
@@ -61,20 +104,12 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return spinnerCmds
 		}
 
-		allDone := true
 		for i := range m.Runners {
 			cmds = append(cmds, updateSpinners(&m.Runners[i])...)
-
-			if m.Runners[i].State == Failed {
-				return m, tea.Quit
-			}
-
-			if m.Runners[i].State != Completed && m.Runners[i].State != Failed {
-				allDone = false
-			}
 		}
 
-		if allDone {
+		allDone, anyFailed := m.checkTasksState()
+		if allDone && !anyFailed {
 			return m, tea.Quit
 		}
 
@@ -82,6 +117,20 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	return m, nil
+}
+
+func (m *Model) runnerAtPath(path []int) *Runner {
+	if len(path) == 0 || path[0] < 0 || path[0] >= len(m.Runners) {
+		return nil
+	}
+	runner := &m.Runners[path[0]]
+	for _, index := range path[1:] {
+		if index < 0 || index >= len(runner.Children) {
+			return nil
+		}
+		runner = &runner.Children[index]
+	}
+	return runner
 }
 
 func (m *Model) checkTasksState() (allDone, anyFailed bool) {
@@ -148,7 +197,6 @@ func renderTask(runner Runner, indent string) string {
 		view = indent + lipgloss.NewStyle().Render(status) + "\n"
 	}
 
-	// Recursively render children
 	if len(runner.Children) > 0 && (runner.State == Running || IsCI() || runner.Config.DisableUI) {
 		for _, child := range runner.Children {
 			view += renderTask(child, indent+"  ")

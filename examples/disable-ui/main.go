@@ -13,7 +13,7 @@ func main() {
 			Title: "Task with UI disabled",
 			Task: func(t *taskin.Task) error {
 				for i := 0; i < 3; i++ {
-					t.Title = fmt.Sprintf("Task with UI disabled: [%d/3] processing", i+1)
+					t.SetTitle(fmt.Sprintf("Task with UI disabled: [%d/3] processing", i+1))
 					time.Sleep(500 * time.Millisecond)
 				}
 				return nil
@@ -26,7 +26,7 @@ func main() {
 					Title: "Child task 1",
 					Task: func(t *taskin.Task) error {
 						for i := 0; i < 2; i++ {
-							t.Title = fmt.Sprintf("Child task 1: [%d/2] working", i+1)
+							t.SetTitle(fmt.Sprintf("Child task 1: [%d/2] working", i+1))
 							time.Sleep(300 * time.Millisecond)
 						}
 						return nil
@@ -36,7 +36,7 @@ func main() {
 					Title: "Child task 2",
 					Task: func(t *taskin.Task) error {
 						for i := 0; i < 2; i++ {
-							t.Title = fmt.Sprintf("Child task 2: [%d/2] working", i+1)
+							t.SetTitle(fmt.Sprintf("Child task 2: [%d/2] working", i+1))
 							time.Sleep(300 * time.Millisecond)
 						}
 						return nil

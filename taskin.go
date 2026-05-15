@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"regexp"
+	"sync"
 
 	"github.com/charmbracelet/bubbles/progress"
 	"github.com/charmbracelet/bubbles/spinner"
@@ -13,15 +14,19 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-var program *tea.Program
+type taskUpdateCallback func(Task)
+
+var taskUpdateCallbacks sync.Map
+
+var ansiEscapeCodePattern = regexp.MustCompile(` *\x1b\[[0-?]*[ -/]*[@-~]`)
 
 func NewRunner(task Task, cfg Config) Runner {
 
 	var spinr *spinner.Model
 
 	if !IsCI() && !cfg.DisableUI {
-		spinnerModel := spinner.New(spinner.WithSpinner(cfg.Spinner))           // Initialize with a spinner model
-		spinnerModel.Style = lipgloss.NewStyle().Foreground(cfg.Colors.Spinner) // Styling spinner
+		spinnerModel := spinner.New(spinner.WithSpinner(cfg.Spinner))
+		spinnerModel.Style = lipgloss.NewStyle().Foreground(cfg.Colors.Spinner)
 		spinr = &spinnerModel
 
 		if task.ShowProgress.Total != 0 {
@@ -43,17 +48,41 @@ func NewRunner(task Task, cfg Config) Runner {
 }
 
 func (task *Task) Progress(current, total int) {
-	task.ShowProgress = TaskProgress{Current: current, Total: total}
-	if IsCI() {
+	task.applyProgress(TaskProgress{Current: current, Total: total})
+	task.notifyUpdate()
+}
+
+func (task *Task) SetTitle(title string) {
+	task.Title = title
+	task.notifyUpdate()
+}
+
+func (task *Task) SetHideView(hide bool) {
+	task.HideView = hide
+	task.notifyUpdate()
+}
+
+func (task *Task) applyProgress(taskProgress TaskProgress) {
+	task.ShowProgress = taskProgress
+	if IsCI() || task.Config.DisableUI {
 		return
 	}
 	if !task.Bar.IsAnimating() {
 		task.Bar = progress.New(task.Config.ProgressOptions...)
 	}
-	if total != 0 { // Check if TaskProgress is set
-		percent := float64(current) / float64(total)
-		task.Bar.SetPercent(percent)
+	if taskProgress.Total == 0 {
+		return
 	}
+	percent := float64(taskProgress.Current) / float64(taskProgress.Total)
+	task.Bar.SetPercent(percent)
+}
+
+func (task *Task) notifyUpdate() {
+	callback, ok := taskUpdateCallbacks.Load(task)
+	if !ok {
+		return
+	}
+	callback.(taskUpdateCallback)(snapshotTask(*task))
 }
 
 type ansiEscapeCodeFilter struct {
@@ -61,25 +90,21 @@ type ansiEscapeCodeFilter struct {
 }
 
 func (f *ansiEscapeCodeFilter) Write(p []byte) (n int, err error) {
-	// Corrected regular expression to match ANSI escape codes
-	re := regexp.MustCompile(` *\x1b\[[0-?]*[ -/]*[@-~]`)
-	// Remove the escape codes from the input
-	p = re.ReplaceAll(p, []byte{})
-	// Write the filtered input to the original writer
+	p = ansiEscapeCodePattern.ReplaceAll(p, []byte{})
 	return f.writer.Write(p)
 }
 
 func (r *Runners) Run() error {
-	m := &Model{Runners: *r, Shutdown: false, ShutdownError: nil}
+	m := &Model{Runners: cloneRunners(*r), Shutdown: false, ShutdownError: nil, taskMessages: make(chan tea.Msg, 64)}
 
 	var out io.Writer = os.Stdout
-	// Check if we need to disable UI features or are in CI mode
 	if IsCI() || (len(*r) > 0 && (*r)[0].Config.DisableUI) {
 		out = &ansiEscapeCodeFilter{writer: out}
 	}
 
-	program = tea.NewProgram(m, tea.WithInput(nil), tea.WithOutput(out))
+	program := tea.NewProgram(m, tea.WithInput(nil), tea.WithOutput(out))
 	_, err := program.Run()
+	*r = m.Runners
 	if err != nil {
 		return fmt.Errorf("program run error: %w", err)
 	}
@@ -99,54 +124,113 @@ func New(tasks Tasks, cfg Config) Runners {
 		runners = append(runners, NewRunner(task, cfg))
 	}
 
-	// Helper function to run a task and its children recursively
-	var runTaskAndChildren func(runner *Runner) error
-	runTaskAndChildren = func(runner *Runner) error {
-		runner.State = Running
+	return runners
+}
 
-		// Run the task itself first if it has a function
-		if runner.Task.Task != nil {
-			err := runner.Task.Task(&runner.Task)
-			if err != nil {
-				runner.Task.Title = fmt.Sprintf("%s - %s", runner.Task.Title, err.Error())
-				runner.State = Failed
-				return err
+func runTasksCmd(runners Runners, messages chan<- tea.Msg) tea.Cmd {
+	return func() tea.Msg {
+		go func() {
+			if err := runRunners(runners, messages); err != nil {
+				messages <- TerminateWithError{Error: err}
 			}
-		}
-
-		// Run all children recursively
-		for i := range runner.Children {
-			err := runTaskAndChildren(&runner.Children[i])
-			if err != nil {
-				runner.State = Failed
-				return err
-			}
-		}
-
-		runner.State = Completed
-		if program != nil {
-			program.Send(spinner.TickMsg{})
-		}
+		}()
 		return nil
 	}
+}
 
-	go func() {
-		for i := range runners {
-			// Check for previous failures
-			for _, prev := range runners[:i] {
-				if prev.State == Failed && prev.Config.Options.ExitOnFailure {
-					return
-				}
+func runRunners(runners Runners, messages chan<- tea.Msg) error {
+	var firstErr error
+	for i := range runners {
+		err := runTaskAndChildren(&runners[i], pathWithIndex(nil, i), messages)
+		if err != nil {
+			if firstErr == nil {
+				firstErr = err
 			}
-
-			err := runTaskAndChildren(&runners[i])
-			if err != nil && program != nil {
-				program.Send(TerminateWithError{Error: err})
+			if runners[i].Config.Options.ExitOnFailure {
+				return firstErr
 			}
 		}
-	}()
+	}
+	return firstErr
+}
 
-	return runners
+func runTaskAndChildren(runner *Runner, path []int, messages chan<- tea.Msg) error {
+	runner.State = Running
+	messages <- taskStartedMsg{Path: path}
+
+	task := runner.Task
+	callback := taskUpdateCallback(func(updated Task) {
+		messages <- taskUpdatedMsg{Path: path, Task: updated}
+	})
+	taskUpdateCallbacks.Store(&task, callback)
+	defer taskUpdateCallbacks.Delete(&task)
+
+	var err error
+	if task.Task != nil {
+		err = task.Task(&task)
+	}
+
+	runner.Task = snapshotTask(task)
+	if err != nil {
+		runner.Task.Title = fmt.Sprintf("%s - %s", runner.Task.Title, err.Error())
+		runner.State = Failed
+		messages <- taskFailedMsg{Path: path, Task: runner.Task}
+		return err
+	}
+	messages <- taskUpdatedMsg{Path: path, Task: runner.Task}
+
+	for i := range runner.Children {
+		if err := runTaskAndChildren(&runner.Children[i], pathWithIndex(path, i), messages); err != nil {
+			runner.State = Failed
+			messages <- taskFailedMsg{Path: path, Task: runner.Task}
+			return err
+		}
+	}
+
+	runner.State = Completed
+	messages <- taskCompletedMsg{Path: path, Task: runner.Task}
+	return nil
+}
+
+func cloneRunners(runners Runners) Runners {
+	if runners == nil {
+		return nil
+	}
+	cloned := make(Runners, len(runners))
+	for i := range runners {
+		cloned[i] = runners[i]
+		cloned[i].Task = snapshotTask(runners[i].Task)
+		cloned[i].Children = cloneRunners(runners[i].Children)
+		if runners[i].Spinner != nil {
+			spinnerCopy := *runners[i].Spinner
+			cloned[i].Spinner = &spinnerCopy
+		}
+	}
+	return cloned
+}
+
+func snapshotTask(task Task) Task {
+	task.Tasks = cloneTasks(task.Tasks)
+	return task
+}
+
+func cloneTasks(tasks Tasks) Tasks {
+	if tasks == nil {
+		return nil
+	}
+	cloned := make(Tasks, len(tasks))
+	for i := range tasks {
+		cloned[i] = tasks[i]
+		cloned[i].Tasks = cloneTasks(tasks[i].Tasks)
+	}
+	return cloned
+}
+
+func pathWithIndex(path []int, index int) []int {
+	next := make([]int, len(path)+1)
+	copy(next, path)
+	next[len(path)] = index
+	return next
 }
 
 func IsCI() bool {

@@ -13,7 +13,7 @@ func main() {
 			Title: "Task 1",
 			Task: func(t *taskin.Task) error {
 				for i := 0; i < 3; i++ {
-					t.Title = fmt.Sprintf("Task 1: [%d/3] seconds have passed", i+1)
+					t.SetTitle(fmt.Sprintf("Task 1: [%d/3] seconds have passed", i+1))
 					time.Sleep(500 * time.Millisecond)
 				}
 				return nil
@@ -29,7 +29,7 @@ func main() {
 			Title: "Task 3",
 			Task: func(t *taskin.Task) error {
 				for i := 0; i < 3; i++ {
-					t.Title = fmt.Sprintf("Task 3: [%d/3] seconds have passed", i+1)
+					t.SetTitle(fmt.Sprintf("Task 3: [%d/3] seconds have passed", i+1))
 					time.Sleep(500 * time.Millisecond)
 				}
 				return nil
