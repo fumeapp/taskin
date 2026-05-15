@@ -18,13 +18,15 @@ type taskUpdateCallback func(Task)
 
 var taskUpdateCallbacks sync.Map
 
+var ansiEscapeCodePattern = regexp.MustCompile(` *\x1b\[[0-?]*[ -/]*[@-~]`)
+
 func NewRunner(task Task, cfg Config) Runner {
 
 	var spinr *spinner.Model
 
 	if !IsCI() && !cfg.DisableUI {
-		spinnerModel := spinner.New(spinner.WithSpinner(cfg.Spinner))           // Initialize with a spinner model
-		spinnerModel.Style = lipgloss.NewStyle().Foreground(cfg.Colors.Spinner) // Styling spinner
+		spinnerModel := spinner.New(spinner.WithSpinner(cfg.Spinner))
+		spinnerModel.Style = lipgloss.NewStyle().Foreground(cfg.Colors.Spinner)
 		spinr = &spinnerModel
 
 		if task.ShowProgress.Total != 0 {
@@ -68,10 +70,11 @@ func (task *Task) applyProgress(taskProgress TaskProgress) {
 	if !task.Bar.IsAnimating() {
 		task.Bar = progress.New(task.Config.ProgressOptions...)
 	}
-	if taskProgress.Total != 0 { // Check if TaskProgress is set
-		percent := float64(taskProgress.Current) / float64(taskProgress.Total)
-		task.Bar.SetPercent(percent)
+	if taskProgress.Total == 0 {
+		return
 	}
+	percent := float64(taskProgress.Current) / float64(taskProgress.Total)
+	task.Bar.SetPercent(percent)
 }
 
 func (task *Task) notifyUpdate() {
@@ -87,11 +90,7 @@ type ansiEscapeCodeFilter struct {
 }
 
 func (f *ansiEscapeCodeFilter) Write(p []byte) (n int, err error) {
-	// Corrected regular expression to match ANSI escape codes
-	re := regexp.MustCompile(` *\x1b\[[0-?]*[ -/]*[@-~]`)
-	// Remove the escape codes from the input
-	p = re.ReplaceAll(p, []byte{})
-	// Write the filtered input to the original writer
+	p = ansiEscapeCodePattern.ReplaceAll(p, []byte{})
 	return f.writer.Write(p)
 }
 
@@ -99,7 +98,6 @@ func (r *Runners) Run() error {
 	m := &Model{Runners: cloneRunners(*r), Shutdown: false, ShutdownError: nil, taskMessages: make(chan tea.Msg, 64)}
 
 	var out io.Writer = os.Stdout
-	// Check if we need to disable UI features or are in CI mode
 	if IsCI() || (len(*r) > 0 && (*r)[0].Config.DisableUI) {
 		out = &ansiEscapeCodeFilter{writer: out}
 	}
@@ -144,14 +142,13 @@ func runRunners(runners Runners, messages chan<- tea.Msg) error {
 	var firstErr error
 	for i := range runners {
 		err := runTaskAndChildren(&runners[i], pathWithIndex(nil, i), messages)
-		if err == nil {
-			continue
-		}
-		if firstErr == nil {
-			firstErr = err
-		}
-		if runners[i].Config.Options.ExitOnFailure {
-			return firstErr
+		if err != nil {
+			if firstErr == nil {
+				firstErr = err
+			}
+			if runners[i].Config.Options.ExitOnFailure {
+				return firstErr
+			}
 		}
 	}
 	return firstErr
@@ -166,11 +163,12 @@ func runTaskAndChildren(runner *Runner, path []int, messages chan<- tea.Msg) err
 		messages <- taskUpdatedMsg{Path: path, Task: updated}
 	})
 	taskUpdateCallbacks.Store(&task, callback)
+	defer taskUpdateCallbacks.Delete(&task)
+
 	var err error
 	if task.Task != nil {
 		err = task.Task(&task)
 	}
-	taskUpdateCallbacks.Delete(&task)
 
 	runner.Task = snapshotTask(task)
 	if err != nil {

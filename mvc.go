@@ -85,7 +85,6 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case spinner.TickMsg:
 		var cmds []tea.Cmd
 
-		// Helper function to update spinners recursively
 		var updateSpinners func(runner *Runner) []tea.Cmd
 		updateSpinners = func(runner *Runner) []tea.Cmd {
 			var spinnerCmds []tea.Cmd
@@ -98,7 +97,6 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 			}
 
-			// Recursively update all children's spinners
 			for i := range runner.Children {
 				spinnerCmds = append(spinnerCmds, updateSpinners(&runner.Children[i])...)
 			}
@@ -199,7 +197,6 @@ func renderTask(runner Runner, indent string) string {
 		view = indent + lipgloss.NewStyle().Render(status) + "\n"
 	}
 
-	// Recursively render children
 	if len(runner.Children) > 0 && (runner.State == Running || IsCI() || runner.Config.DisableUI) {
 		for _, child := range runner.Children {
 			view += renderTask(child, indent+"  ")
